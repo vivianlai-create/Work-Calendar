@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (同天拖曳與每週循環版)</title>
+  <title>工作儀表板 (安全無損相容與防當機版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -91,7 +91,6 @@
     .table-text-input:hover { background-color: #fff; border-color: #ccc; }
     .table-text-input:focus { background-color: #fff; border-color: var(--primary-color); outline: none; }
 
-    /* 📅 功能 3：確保月曆等寬排版 (1fr 均分) */
     .calendar-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; }
     @media (max-width: 992px) { .calendar-layout { grid-template-columns: 1fr; } }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 14.28%); gap: 4px; width: 100%; box-sizing: border-box; }
@@ -106,22 +105,19 @@
     
     .today-tag { position: absolute; top: 4px; right: 4px; background-color: #f1c40f; color: #2c3e50; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; z-index: 2; }
 
-    /* 每個日程項目卡片排版 */
     .event-tag {
       font-size: 11px; padding: 4px 6px; border-radius: 3px; margin-bottom: 4px; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
       display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
     }
     .event-tag.completed { text-decoration: line-through !important; opacity: 0.45; }
-    .event-tag.inner-drag-over { border-top: 3px solid #ff9800 !important; } /* 同天拖曳排序定位輔助線 */
+    .event-tag.inner-drag-over { border-top: 3px solid #ff9800 !important; }
     
-    /* 📋 行程內置備忘小提示字體 */
     .event-tag-memo {
       font-size: 9px; opacity: 0.75; font-weight: normal; margin-top: 1px; line-height: 1.1; word-break: break-all; white-space: normal;
     }
 
     .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; }
     
-    /* 功能 4：歸位移至右欄最下方的批量資源籃 */
     .batch-box { background-color: #f4ecf7; border: 2px dashed #9b59b6; border-radius: 6px; padding: 12px; margin-top: 15px; }
     .batch-item { display: inline-flex; align-items: center; background: #fff; border: 1px solid #9b59b6; padding: 2px 8px; border-radius: 4px; font-size: 12px; gap: 6px; margin: 3px; }
 
@@ -243,7 +239,6 @@
           <div class="calendar-grid" id="calendar-grid"></div>
         </div>
 
-        <!-- 功能 2：自訂範本，加入「每週固定天」循環欄位 -->
         <div class="card">
           <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目</span></div>
           <form class="inline-form" onsubmit="addRecurringTemplate(event)">
@@ -316,7 +311,7 @@
           <div id="error-items-container" style="min-height: 80px; max-height: 120px; overflow-y: auto;"></div>
         </div>
 
-        <!-- 功能 4：歸位至最下方的多選/批量清除管理池 -->
+        <!-- 批量清除管理池 -->
         <div class="card batch-box" id="batch-drop-pool">
           <div style="font-weight: bold; color: #8e44ad; font-size: 14px; margin-bottom: 6px;">📦 批量清除與大筆移動資源籃</div>
           <div style="font-size: 11px; color:#666; margin-bottom: 8px;">(💡 拖曳月曆上的任何行程丟進來放開，即可暫存批量處理)</div>
@@ -357,7 +352,7 @@
   let state = {
     currentMonth: '2026-07',
     checklistData: {}, 
-    events: {}, // 物件格式：{ text: "", memo: "", color: "", fontColor: "", completed: false }
+    events: {}, 
     importantItems: {},
     memoItems: {},
     sharedItems: {},
@@ -391,14 +386,9 @@
         categories = decodedData.categories || ['核心專案', '行政/例行', '跨部門協作'];
         subTabs = decodedData.subTabs || ['主頁面']; currentSubTab = decodedData.currentSubTab || '主頁面'; state = decodedData.state;
         
-        // 確保結構修復
-        for (let m in state.events) {
-          for (let d in state.events[m]) {
-            state.events[m][d].forEach(evt => {
-              if (evt.memo === undefined) evt.memo = "";
-            });
-          }
-        }
+        // 執行無損修復
+        migrateAndNormalizeData();
+        
         recurringEventsTemplate = decodedData.recurringEventsTemplate || [];
         recurringEventsTemplate.forEach(t => { if(t.week === undefined) t.week = ""; });
 
@@ -416,6 +406,81 @@
     localStorage.setItem('dashboard_recurring', JSON.stringify(recurringEventsTemplate));
   }
 
+  /* 🛡️ 核心修復演算：安全對齊所有歷史資料結構 */
+  function migrateAndNormalizeData() {
+    if (!state) state = {};
+    if (!state.checklistData) state.checklistData = {};
+    if (!state.events) state.events = {};
+    if (!state.importantItems) state.importantItems = {};
+    if (!state.memoItems) state.memoItems = {};
+    if (!state.sharedItems) state.sharedItems = {};
+    if (!state.errorItems) state.errorItems = {};
+    if (!state.currentMonth) state.currentMonth = '2026-07';
+
+    // 1. 搬移極舊版本 checklist
+    if (state.checklist && Object.keys(state.checklistData).length === 0) {
+      for (let m in state.checklist) {
+        state.checklistData[m] = { '主頁面': state.checklist[m] || [] };
+      }
+    }
+
+    // 2. 補全所有 checklist 欄位
+    for (let m in state.checklistData) {
+      for (let t in state.checklistData[m]) {
+        if (!Array.isArray(state.checklistData[m][t])) {
+          state.checklistData[m][t] = [];
+        }
+        state.checklistData[m][t].forEach(item => {
+          if (item && typeof item === 'object') {
+            if (item.detail === undefined) item.detail = "";
+            if (item.notice === undefined) item.notice = item.note || "";
+            if (item.note === undefined) item.note = "";
+            if (item.completed === undefined) item.completed = false;
+          }
+        });
+      }
+    }
+
+    // 3. 極重要：全面重整 events 行程陣列 (徹底防止字串格式導致的 crash)
+    for (let m in state.events) {
+      if (typeof state.events[m] !== 'object' || state.events[m] === null) {
+        state.events[m] = {};
+      }
+      for (let d in state.events[m]) {
+        if (!Array.isArray(state.events[m][d])) {
+          state.events[m][d] = [];
+        }
+        
+        state.events[m][d] = state.events[m][d].map(evt => {
+          if (!evt) return { text: "未命名行程", memo: "", color: "#e3f2fd", fontColor: "#1e88e5", completed: false };
+          
+          // 如果偵測到舊的單一文字字串：無損升級成物件
+          if (typeof evt === 'string') {
+            return {
+              text: evt,
+              memo: "",
+              color: "#e3f2fd",
+              fontColor: "#1e88e5",
+              completed: false
+            };
+          }
+          
+          // 如果是舊物件：完美補全缺漏屬性
+          if (typeof evt === 'object') {
+            return {
+              text: evt.text || "未命名行程",
+              memo: evt.memo || "",
+              color: evt.color || "#e3f2fd",
+              fontColor: evt.fontColor || "#1e88e5",
+              completed: !!evt.completed
+            };
+          }
+          return evt;
+        });
+      }
+    }
+  }
+
   function loadFromLocalStorage() {
     const cachedCategories = localStorage.getItem('dashboard_categories');
     const cachedSubTabs = localStorage.getItem('dashboard_subtabs');
@@ -429,32 +494,19 @@
 
     if (cachedState) {
       state = JSON.parse(cachedState);
-      if (!state.checklistData) state.checklistData = {};
-      if (!state.events) state.events = {};
     } else {
       const initKey = '2026-07';
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
     }
 
-    // 確保內建備忘功能安全初始化
-    for (let m in state.events) {
-      for (let d in state.events[m]) {
-        state.events[m][d].forEach(evt => { if (evt.memo === undefined) evt.memo = ""; });
-      }
-    }
+    // 執行無損安全升級修復
+    migrateAndNormalizeData();
 
     if (cachedRecurring) {
       recurringEventsTemplate = JSON.parse(cachedRecurring);
       recurringEventsTemplate.forEach(t => { if(t.week === undefined) t.week = ""; });
     }
   }
-
-  function updateThemeColors() {
-    const primaryColor = document.getElementById('theme-primary').value; const bgColor = document.getElementById('theme-bg').value;
-    applyThemeStyles(primaryColor, bgColor); localStorage.setItem('theme_primary_color', primaryColor); localStorage.setItem('theme_bg_color', bgColor);
-  }
-  function applyThemeStyles(primary, bg) { document.getElementById('custom-theme-styles').innerHTML = `:root { --primary-color: ${primary}; --bg-color: ${bg}; }`; }
-  function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
   function generateMonthOptions() {
     const select = document.getElementById('month-select'); select.innerHTML = '';
@@ -491,7 +543,7 @@
 
   function touchCalendarTab() {
     switchTab('tab-calendar', document.getElementById('btn-tab-calendar'));
-    renderCalendar(); // 防止等寬比初始渲染未同步計算
+    renderCalendar(); 
   }
 
   function globalSwitchMonth() {
@@ -674,7 +726,7 @@
   }
   function deleteErrorItem(index) { state.errorItems[state.currentMonth].splice(index, 1); renderErrorItems(); saveToLocalStorage(); }
 
-  /* ================== 📅 行事曆、同天滑鼠拖曳與內建備註功能核心 ================== */
+  /* ================== 📅 行事曆、拖曳與高相容備忘、客製底色機制 ================== */
   function toggleEventCompleted(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
@@ -693,8 +745,7 @@
     }
     targetObj.text = newText.trim();
     
-    // 功能 3：客製化追加、修改備註欄位功能
-    const newMemo = prompt("請為此行程添加或修改「備忘詳細註記」(不加請留空或刪除)：", targetObj.memo || "");
+    const newMemo = prompt("請添加或修改「備忘詳細註記」 (不加或刪除請留空)：", targetObj.memo || "");
     if (newMemo !== null) targetObj.memo = newMemo.trim();
 
     const newColor = prompt("設定標籤底色 (若要移除顏色變回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
@@ -709,7 +760,7 @@
     renderCalendar(); saveToLocalStorage();
   }
 
-  // 大量資源籃大箱子接收事件
+  // 大量資源籃拖曳接收
   const poolBox = document.getElementById('batch-drop-pool');
   poolBox.ondragover = (e) => { e.preventDefault(); poolBox.style.backgroundColor = '#ebdef0'; };
   poolBox.ondragleave = () => { poolBox.style.backgroundColor = '#f4ecf7'; };
@@ -743,9 +794,8 @@
     clearBatchPool(false); renderCalendar(); saveToLocalStorage();
   }
 
-  /* ================== 滑鼠同天內、跨天混合托曳排序機制核心 ================== */
-  let draggedItem = null; let sourceDay = null;
-  let targetOrderIndex = null; // 儲存同天內插入的索引定位
+  /* 同天滑鼠拖曳與跨天排序機制的精準滑動整合 */
+  let draggedItem = null; let sourceDay = null; let targetOrderIndex = null;
 
   function renderCalendar() {
     const [year, month] = state.currentMonth.split('-').map(Number);
@@ -766,7 +816,6 @@
       const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.dataset.day = day;
       if (isCurrentDashboardYearMonth && systemDate.getDate() === day) { dayDiv.classList.add('today-highlight'); dayDiv.innerHTML = `<div class="today-tag">🏆 今天</div>`; }
 
-      // 1. 日期格子整格作為放下的容器監聽
       dayDiv.ondragover = (e) => { e.preventDefault(); if (e.target === dayDiv || e.target.className === 'day-number') { dayDiv.classList.add('drag-over'); } };
       dayDiv.ondragleave = (e) => { dayDiv.classList.remove('drag-over'); };
       
@@ -775,19 +824,15 @@
         if (draggedItem !== null && sourceDay !== null) {
           const targetDay = parseInt(dayDiv.dataset.day);
           
-          // 如果是同天內部托曳，且沒有點到特定行程卡片的間隙，則丟到陣列最尾端
           if (targetOrderIndex === null) {
             const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
             if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
             if (!state.events[state.currentMonth][targetDay]) state.events[state.currentMonth][targetDay] = [];
             state.events[state.currentMonth][targetDay].push(movedObj);
           } else {
-            // 如果是在特定行程卡片的位置放下 (不論同天還是跨天)
             const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
             if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
             if (!state.events[state.currentMonth][targetDay]) state.events[state.currentMonth][targetDay] = [];
-            
-            // 完美插入至目標指派之順序位置中
             state.events[state.currentMonth][targetDay].splice(targetOrderIndex, 0, movedObj);
           }
           draggedItem = null; sourceDay = null; targetOrderIndex = null;
@@ -802,7 +847,6 @@
       evts.forEach((evtObj, idx) => {
         const tag = document.createElement('div'); tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; tag.draggable = true;
         
-        // 核心文字與備註的渲染
         let memoHtml = evtObj.memo ? `<div class="event-tag-memo">📎 ${evtObj.memo}</div>` : '';
         tag.innerHTML = `<span>${idx + 1}. ${evtObj.text}</span>${memoHtml}`;
         
@@ -810,7 +854,6 @@
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
 
-        // 綁定行程本身的拖曳、滑動監聽 (實現同天、跨天內任意插隊)
         tag.ondragstart = (event) => { draggedItem = { text: evtObj.text, index: idx }, sourceDay = day; event.stopPropagation(); };
         tag.ondragover = (event) => { event.preventDefault(); event.stopPropagation(); tag.classList.add('inner-drag-over'); targetOrderIndex = idx; };
         tag.ondragleave = (event) => { event.stopPropagation(); tag.classList.remove('inner-drag-over'); };
@@ -836,11 +879,10 @@
     }
   }
 
-  /* ================== ⚙️ 自訂帶入範本配置 (每週循環) ================== */
+  /* ================== ⚙️ 範本管理 ================== */
   function updateTemplateCondition(index, field, value) {
     if (field === 'condition_day') recurringEventsTemplate[index].day = value.trim();
     else if (field === 'condition_workday') recurringEventsTemplate[index].workday = value.trim();
-    // 功能 2：修改每週固定循環範本條件
     else if (field === 'condition_week') recurringEventsTemplate[index].week = value.trim();
     else if (field === 'text') recurringEventsTemplate[index].text = value.trim();
     saveToLocalStorage();
@@ -877,7 +919,6 @@
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
-  // 功能 2：一鍵排入固定日程核心演算擴充 (精準解析每週循環日期)
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
@@ -896,7 +937,6 @@
         const days = item.day.split(/[,，]/).map(d => d.trim().toLowerCase()).filter(d => d !== '');
         days.forEach(d => { let dNum = (d === 'last') ? lastDay : Number(d); if (dNum && dNum <= lastDay) targetDaysArray.push(dNum); });
       }
-      // 演算每週循環：比對當月哪些天符合星期設定
       if (item.week) {
         const targetWeeks = item.week.split(/[,，]/).map(w => w.trim());
         let allowedWeekdays = [];
