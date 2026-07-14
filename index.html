@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (安全無損相容與防當機版)</title>
+  <title>工作儀表板 (終極完美修復版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -386,7 +386,6 @@
         categories = decodedData.categories || ['核心專案', '行政/例行', '跨部門協作'];
         subTabs = decodedData.subTabs || ['主頁面']; currentSubTab = decodedData.currentSubTab || '主頁面'; state = decodedData.state;
         
-        // 執行無損修復
         migrateAndNormalizeData();
         
         recurringEventsTemplate = decodedData.recurringEventsTemplate || [];
@@ -406,7 +405,6 @@
     localStorage.setItem('dashboard_recurring', JSON.stringify(recurringEventsTemplate));
   }
 
-  /* 🛡️ 核心修復演算：安全對齊所有歷史資料結構 */
   function migrateAndNormalizeData() {
     if (!state) state = {};
     if (!state.checklistData) state.checklistData = {};
@@ -417,14 +415,12 @@
     if (!state.errorItems) state.errorItems = {};
     if (!state.currentMonth) state.currentMonth = '2026-07';
 
-    // 1. 搬移極舊版本 checklist
     if (state.checklist && Object.keys(state.checklistData).length === 0) {
       for (let m in state.checklist) {
         state.checklistData[m] = { '主頁面': state.checklist[m] || [] };
       }
     }
 
-    // 2. 補全所有 checklist 欄位
     for (let m in state.checklistData) {
       for (let t in state.checklistData[m]) {
         if (!Array.isArray(state.checklistData[m][t])) {
@@ -441,7 +437,6 @@
       }
     }
 
-    // 3. 極重要：全面重整 events 行程陣列 (徹底防止字串格式導致的 crash)
     for (let m in state.events) {
       if (typeof state.events[m] !== 'object' || state.events[m] === null) {
         state.events[m] = {};
@@ -453,19 +448,9 @@
         
         state.events[m][d] = state.events[m][d].map(evt => {
           if (!evt) return { text: "未命名行程", memo: "", color: "#e3f2fd", fontColor: "#1e88e5", completed: false };
-          
-          // 如果偵測到舊的單一文字字串：無損升級成物件
           if (typeof evt === 'string') {
-            return {
-              text: evt,
-              memo: "",
-              color: "#e3f2fd",
-              fontColor: "#1e88e5",
-              completed: false
-            };
+            return { text: evt, memo: "", color: "#e3f2fd", fontColor: "#1e88e5", completed: false };
           }
-          
-          // 如果是舊物件：完美補全缺漏屬性
           if (typeof evt === 'object') {
             return {
               text: evt.text || "未命名行程",
@@ -499,7 +484,6 @@
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
     }
 
-    // 執行無損安全升級修復
     migrateAndNormalizeData();
 
     if (cachedRecurring) {
@@ -726,7 +710,7 @@
   }
   function deleteErrorItem(index) { state.errorItems[state.currentMonth].splice(index, 1); renderErrorItems(); saveToLocalStorage(); }
 
-  /* ================== 📅 行事曆、拖曳與高相容備忘、客製底色機制 ================== */
+  /* ================== 📅 行事曆邏輯 ================== */
   function toggleEventCompleted(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
@@ -760,22 +744,25 @@
     renderCalendar(); saveToLocalStorage();
   }
 
-  // 大量資源籃拖曳接收
+  // 批量資源池
   const poolBox = document.getElementById('batch-drop-pool');
-  poolBox.ondragover = (e) => { e.preventDefault(); poolBox.style.backgroundColor = '#ebdef0'; };
-  poolBox.ondragleave = () => { poolBox.style.backgroundColor = '#f4ecf7'; };
-  poolBox.ondrop = (e) => {
-    e.preventDefault(); poolBox.style.backgroundColor = '#f4ecf7';
-    if (draggedItem !== null && sourceDay !== null) {
-      const extractedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
-      if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
-      batchPoolArray.push(extractedObj); draggedItem = null; sourceDay = null;
-      renderCalendar(); renderBatchPool(); saveToLocalStorage();
-    }
-  };
+  if (poolBox) {
+    poolBox.ondragover = (e) => { e.preventDefault(); poolBox.style.backgroundColor = '#ebdef0'; };
+    poolBox.ondragleave = () => { poolBox.style.backgroundColor = '#f4ecf7'; };
+    poolBox.ondrop = (e) => {
+      e.preventDefault(); poolBox.style.backgroundColor = '#f4ecf7';
+      if (draggedItem !== null && sourceDay !== null) {
+        const extractedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
+        if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
+        batchPoolArray.push(extractedObj); draggedItem = null; sourceDay = null;
+        renderCalendar(); renderBatchPool(); saveToLocalStorage();
+      }
+    };
+  }
 
   function renderBatchPool() {
-    const listDiv = document.getElementById('batch-items-list'); listDiv.innerHTML = '';
+    const listDiv = document.getElementById('batch-items-list'); if(!listDiv) return;
+    listDiv.innerHTML = '';
     if (batchPoolArray.length === 0) { listDiv.innerHTML = '<span style="color:#aaa; font-style:italic; font-size:12px;">籃子目前是空的。</span>'; return; }
     batchPoolArray.forEach((item, idx) => {
       listDiv.innerHTML += `<div class="batch-item" style="background:${item.color}; color:${item.fontColor};"><span>${item.text}</span><span style="color:#e74c3c; font-weight:bold; cursor:pointer;" onclick="removeItemFromPool(${idx})">×</span></div>`;
@@ -794,13 +781,13 @@
     clearBatchPool(false); renderCalendar(); saveToLocalStorage();
   }
 
-  /* 同天滑鼠拖曳與跨天排序機制的精準滑動整合 */
   let draggedItem = null; let sourceDay = null; let targetOrderIndex = null;
 
   function renderCalendar() {
+    const grid = document.getElementById('calendar-grid'); if(!grid) return;
     const [year, month] = state.currentMonth.split('-').map(Number);
     document.getElementById('calendar-month-title').textContent = `${year} 年 ${month.toString().padStart(2, '0')} 月`;
-    const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
+    grid.innerHTML = '';
     
     const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
     weekDays.forEach(d => { const h = document.createElement('div'); h.className = 'calendar-day-header'; h.textContent = d; grid.appendChild(h); });
@@ -867,7 +854,7 @@
       
       dayDiv.ondblclick = (event) => {
         if (event.target === dayDiv || event.target.className === 'day-number' || event.target.className === 'today-tag') {
-          const quickText = prompt(`在此日期 (${day} 號) 追加一項日程：`);
+          const quickText = prompt("在此日期 追加一項日程：");
           if (quickText && quickText.trim() !== '') {
             if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
             state.events[state.currentMonth][day].push({ text: quickText.trim(), memo: '', color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
@@ -879,7 +866,7 @@
     }
   }
 
-  /* ================== ⚙️ 範本管理 ================== */
+  /* ================== ⚙️ 範本配置 ================== */
   function updateTemplateCondition(index, field, value) {
     if (field === 'condition_day') recurringEventsTemplate[index].day = value.trim();
     else if (field === 'condition_workday') recurringEventsTemplate[index].workday = value.trim();
@@ -889,7 +876,8 @@
   }
 
   function renderRecurringManager() {
-    const tbody = document.getElementById('recurring-tbody'); tbody.innerHTML = '';
+    const tbody = document.getElementById('recurring-tbody'); if(!tbody) return;
+    tbody.innerHTML = '';
     recurringEventsTemplate.forEach((item, index) => {
       tbody.innerHTML += `
         <tr>
