@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (智慧序號與客製化顏色版)</title>
+  <title>工作儀表板 (行程刪除線與範本在線修改版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -21,7 +21,7 @@
       transition: background-color 0.3s;
     }
     .container {
-      max-width: 1350px;
+      max-width: 1400px;
       margin: 0 auto;
     }
     header {
@@ -143,10 +143,10 @@
       align-items: center;
       transition: color 0.3s;
     }
-    select, input, button {
+    select, input, button, textarea {
       font-family: inherit;
     }
-    select, input[type="text"], input[type="date"], input[type="color"], input[type="number"] {
+    select, input[type="text"], input[type="date"], input[type="color"], input[type="number"], textarea {
       padding: 6px 10px;
       font-size: 14px;
       border-radius: 4px;
@@ -178,9 +178,7 @@
       flex-wrap: wrap;
     }
 
-    .category-section {
-      margin-bottom: 25px;
-    }
+    .category-section { margin-bottom: 25px; }
     .category-title {
       font-size: 15px;
       font-weight: bold;
@@ -195,19 +193,13 @@
       justify-content: space-between;
       align-items: center;
     }
-    .category-title:hover {
-      background-color: #dfdfdf;
-    }
-    .category-items-box {
-      display: block;
-    }
-    .category-items-box.collapsed {
-      display: none;
-    }
+    .category-title:hover { background-color: #dfdfdf; }
+    .category-items-box { display: block; }
+    .category-items-box.collapsed { display: none; }
 
     .checklist-item {
       display: flex;
-      align-items: center;
+      align-items: stretch;
       gap: 10px;
       margin-bottom: 8px;
       padding: 8px 12px;
@@ -216,129 +208,68 @@
       border: 1px solid #f0f0f0;
       flex-wrap: wrap;
     }
-    .checklist-item input[type="checkbox"] {
-      transform: scale(1.2);
-      cursor: pointer;
-    }
-    .checklist-item .item-text {
-      flex: 1.8;
-      min-width: 140px;
-    }
-    .checklist-item.completed .item-text {
-      text-decoration: line-through;
-      color: #888;
-    }
+    .checklist-item input[type="checkbox"] { transform: scale(1.2); cursor: pointer; align-self: center; }
     
-    .checklist-item .detail-input,
-    .checklist-item .notice-input,
-    .checklist-item .note-input {
-      flex: 1.5;
-      padding: 4px 8px;
-      font-size: 13px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background-color: #fff;
-      min-width: 120px;
+    .checklist-item .item-text-input {
+      flex: 1.8; min-width: 140px; font-size: 14px; border: 1px solid transparent; background-color: transparent; cursor: text;
+    }
+    .checklist-item .item-text-input:hover { background-color: #fff; border-color: #ddd; }
+    .checklist-item .item-text-input:focus { background-color: #fff; border-color: var(--primary-color); outline: none; }
+    .checklist-item.completed .item-text-input { text-decoration: line-through; color: #888; }
+    
+    .checklist-item .detail-input, .checklist-item .note-input {
+      flex: 1.5; padding: 6px 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; min-width: 120px; align-self: center;
+    }
+    .checklist-item .notice-textarea {
+      flex: 2; padding: 5px 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; min-width: 160px; resize: vertical; height: 34px; min-height: 34px;
     }
 
-    .btn {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s;
-    }
-    .btn:hover {
-      opacity: 0.9;
-    }
+    .btn { background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+    .btn:hover { opacity: 0.9; }
     .btn-danger { background-color: #e74c3c; }
     .btn-success { background-color: #2ecc71; }
     .btn-orange { background-color: #e67e22; }
 
-    .calendar-layout {
-      display: grid;
-      grid-template-columns: 2.5fr 1fr;
-      gap: 20px;
+    .mega-add-box { background-color: #fcfcfc; border: 1px dashed #b5bfc7; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .mega-add-grid { display: grid; grid-template-columns: 1fr 1.5fr 1.5fr 2fr 1.5fr; gap: 10px; margin-bottom: 12px; }
+    @media (max-width: 768px) { .mega-add-grid { grid-template-columns: 1fr; } }
+    .mega-field { display: flex; flex-direction: column; gap: 5px; }
+    .mega-field label { font-size: 12px; font-weight: bold; color: #666; }
+
+    /* 範本在線修改表格專用樣式 */
+    .table-text-input {
+      width: 90%; font-size: 13px; border: 1px solid transparent; background-color: transparent; padding: 4px; border-radius: 3px;
     }
-    @media (max-width: 992px) {
-      .calendar-layout { grid-template-columns: 1fr; }
-    }
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-    }
-    .calendar-day-header {
-      text-align: center;
-      font-weight: bold;
-      background-color: #f0f0f0;
-      padding: 5px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
+    .table-text-input:hover { background-color: #fff; border-color: #ccc; }
+    .table-text-input:focus { background-color: #fff; border-color: var(--primary-color); outline: none; }
+
+    .calendar-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; }
+    @media (max-width: 992px) { .calendar-layout { grid-template-columns: 1fr; } }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 12px; }
     
-    .calendar-day {
-      min-height: 105px;
-      border: 1px solid #eee;
-      border-radius: 4px;
-      padding: 5px;
-      background-color: #fff;
-      cursor: pointer;
-      transition: background-color 0.15s;
-    }
-    .calendar-day.drag-over {
-      background-color: #e3f2fd;
-      border: 2px dashed #1e88e5;
-    }
+    .calendar-day { min-height: 105px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; }
+    .calendar-day.drag-over { background-color: #e3f2fd; border: 2px dashed #1e88e5; }
     .calendar-day:hover { background-color: #f5f9ff; }
     .calendar-day.empty { background-color: #fafafa; cursor: default; }
     .day-number { font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #666; }
     
     .event-tag {
-      font-size: 11px;
-      padding: 3px 6px;
-      border-radius: 3px;
-      margin-bottom: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: grab;
-      user-select: none;
-      font-weight: 500;
+      font-size: 11px; padding: 3px 6px; border-radius: 3px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
     }
-    .event-tag:active {
-      cursor: grabbing;
+    /* 功能 1：事項完成時有刪除線與淡化效果 */
+    .event-tag.completed {
+      text-decoration: line-through !important;
+      opacity: 0.45;
     }
+    .event-tag:active { cursor: grabbing; }
     
-    .sidebar-list-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 8px;
-      border-bottom: 1px solid #eee;
-      font-size: 13px;
-      gap: 10px;
-    }
-    .sidebar-list-item.completed span {
-      text-decoration: line-through;
-      color: #888;
-    }
-    .sidebar-list-item .date-tag {
-      background-color: #f0f0f0;
-      color: #555;
-      padding: 1px 5px;
-      border-radius: 3px;
-      font-size: 11px;
-      white-space: nowrap;
-    }
+    .sidebar-list-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; gap: 10px; }
+    .sidebar-list-item.completed span { text-decoration: line-through; color: #888; }
+    .sidebar-list-item .date-tag { background-color: #f0f0f0; color: #555; padding: 1px 5px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
     .recurring-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     .recurring-table th, .recurring-table td { border: 1px solid #eee; padding: 8px; text-align: left; }
     .recurring-table th { background-color: #fcfcfc; }
-    .theme-picker { display: flex; gap: 15px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
-    .inline-form { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; background-color: #fcfcfc; padding: 10px; border-radius: 6px; border: 1px dashed #ccc; }
   </style>
 </head>
 <body>
@@ -385,14 +316,36 @@
         <button class="btn btn-orange" onclick="copyLastMonthChecklist()">📋 複製上月工作項目到本月</button>
       </div>
       
-      <!-- 工作清單大容器 -->
       <div id="checklist-category-container"></div>
 
-      <form class="add-item-form" onsubmit="addChecklistItem(event)">
-        <select id="new-item-category" style="max-width: 180px;"></select>
-        <input type="text" id="new-item-input" placeholder="輸入新的工作項目名稱..." required>
-        <button type="submit" class="btn">新增項目</button>
-      </form>
+      <div class="mega-add-box">
+        <div style="font-size: 13px; font-weight: bold; color: var(--primary-color); margin-bottom: 8px;">⚡ 一鍵建立完整新項目項目：</div>
+        <form onsubmit="addChecklistItem(event)">
+          <div class="mega-add-grid">
+            <div class="mega-field">
+              <label>🏷️ 選擇分類</label>
+              <select id="new-item-category"></select>
+            </div>
+            <div class="mega-field">
+              <label>📌 工作項目名稱</label>
+              <input type="text" id="new-item-input" placeholder="例: 財務月報處理" required>
+            </div>
+            <div class="mega-field">
+              <label>📋 細項格子</label>
+              <input type="text" id="new-item-detail" placeholder="例: 收集單據、對帳">
+            </div>
+            <div class="mega-field">
+              <label>⚠️ 注意事項 (送出後可自由換行)</label>
+              <input type="text" id="new-item-notice" placeholder="例: 需在下午 5 點前交付給主管">
+            </div>
+            <div class="mega-field">
+              <label>📝 備註事項</label>
+              <input type="text" id="new-item-note" placeholder="例: 急件、抄送至A單位">
+            </div>
+          </div>
+          <button type="submit" class="btn" style="width: 100%;">🚀 確認一次建立此項目</button>
+        </form>
+      </div>
     </div>
 
     <div class="card">
@@ -422,7 +375,7 @@
       <div>
         <div class="card">
           <div class="card-title" style="border-bottom: none; margin-bottom: 0;">
-            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 雙擊格可<b>修改行程與設定自訂顏色標籤</b> / 支援拖移)</small></span>
+            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 <b>單擊項目劃上刪除線</b> / 雙擊客製化顏色 / 支援拖移)</small></span>
             <button class="btn" onclick="applyRecurringEvents()">⚡ 一鍵安排當月固定日程</button>
           </div>
           <div class="calendar-header">
@@ -431,29 +384,29 @@
           <div class="calendar-grid" id="calendar-grid"></div>
         </div>
 
+        <!-- ⚡ 功能二：一鍵帶入項目表格，所有內容在線可修改 -->
         <div class="card">
-          <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目</span></div>
+          <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目 (填寫內容皆可點擊直接修改)</span></div>
           <form class="inline-form" onsubmit="addRecurringTemplate(event)">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定日期 (可隔開)：</label>
-            <input type="text" id="new-rec-day" placeholder="如: 5,10,20 或 last">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 工作天 (可隔開)：</label>
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定日期：</label>
+            <input type="text" id="new-rec-day" placeholder="如: 5,10 或 last">
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 工作天：</label>
             <input type="text" id="new-rec-workday" placeholder="如: 1,3,5">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">📝 日程內容 (可用逗號輸入多筆)：</label>
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">📝 日程內容：</label>
             <input type="text" id="new-rec-text" placeholder="如: 開晨會,填寫工時" style="flex-grow: 1;" required>
             <button type="submit" class="btn btn-success">新增固定項目</button>
           </form>
           <table class="recurring-table">
             <thead>
-              <tr><th style="width: 200px;">自動帶入條件</th><th>日程內容 (支援多筆拆分)</th><th style="width: 70px;">操作</th></tr>
+              <tr><th style="width: 220px;">自動帶入條件</th><th>日程內容</th><th style="width: 70px;">操作</th></tr>
             </thead>
             <tbody id="recurring-tbody"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- 右欄：重要事項、備忘錄、共享與錯誤事項 -->
+      <!-- 右欄 -->
       <div>
-        <!-- ⭐ 本月重要事項 -->
         <div class="card" style="border: 1px solid #f1c40f;">
           <div class="card-title" style="color: #f39c12;"><span>⭐ 本月重要事項</span></div>
           <form class="add-item-form" onsubmit="addImportantItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
@@ -466,7 +419,6 @@
           <div id="important-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
         </div>
 
-        <!-- 📝 備忘錄 -->
         <div class="card" style="border: 1px solid #34495e;">
           <div class="card-title" style="color: #34495e;"><span>📝 備忘錄</span></div>
           <form class="add-item-form" onsubmit="addMemoItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
@@ -479,7 +431,6 @@
           <div id="memo-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
         </div>
 
-        <!-- 📌 共享與特殊事項 -->
         <div class="card">
           <div class="card-title"><span>📌 共享與特殊事項</span></div>
           <form class="add-item-form" onsubmit="addSharedItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
@@ -492,7 +443,6 @@
           <div id="shared-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
         </div>
 
-        <!-- ❌ 錯誤事項 -->
         <div class="card">
           <div class="card-title" style="color: #e74c3c;"><span>❌ 錯誤事項 / 待檢討改善</span></div>
           <form class="add-item-form" onsubmit="addErrorItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
@@ -518,14 +468,12 @@
   let categories = ['核心專案', '行政/例行', '跨部門協作'];
   let subTabs = ['主頁面'];
   let currentSubTab = '主頁面';
-
-  // 紀錄各分類的收縮狀態
   let collapsedCategories = {};
 
   let state = {
     currentMonth: '2026-07',
     checklistData: {}, 
-    events: {}, // 架構變更為儲存物件：{ "日": [ { text: "開會", color: "#e3f2fd", fontColor: "#1e88e5" } ] }
+    events: {}, // 儲存：{ "日": [ { text: "開會", color: "#e3f2fd", fontColor: "#1e88e5", completed: false } ] }
     importantItems: {},
     memoItems: {},
     sharedItems: {},
@@ -556,7 +504,6 @@
     link.href = URL.createObjectURL(blob);
     link.download = `工作儀表板備份_${state.currentMonth}.txt`;
     link.click();
-    document.getElementById('sync-status').innerText = "✅ 備份檔下載完成！";
   }
 
   function importBackupFile(input) {
@@ -584,19 +531,17 @@
           }
         }
 
-        // 行事曆舊格式升級相容
+        // 行程結構確保
         for (let m in state.events) {
           for (let d in state.events[m]) {
             state.events[m][d] = state.events[m][d].map(evt => {
-              if (typeof evt === 'string') {
-                return { text: evt, color: '#e3f2fd', fontColor: '#1e88e5' };
-              }
+              if (evt.completed === undefined) evt.completed = false;
               return evt;
             });
           }
         }
 
-        recurringEventsTemplate = decodedData.recurringEventsTemplate;
+        recurringEventsTemplate = decodedData.recurringEventsTemplate || [];
         headerData = decodedData.headerData;
         document.getElementById('theme-primary').value = decodedData.theme_primary || '#4a90e2';
         document.getElementById('theme-bg').value = decodedData.theme_bg || '#f8f9fa';
@@ -605,7 +550,6 @@
         document.getElementById('editable-title').innerText = headerData.title;
         document.getElementById('editable-desc').innerText = headerData.desc;
         globalSwitchMonth();
-        document.getElementById('sync-status').innerText = "✅ 檔案還原成功！";
         alert("🎉 備份資料已 100% 成功匯入還原！");
       } catch (err) {
         alert("❌ 匯入失敗：檔案格式不正確。");
@@ -648,21 +592,10 @@
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '確認規格需求', note: '' }] } };
     }
 
-    for (let m in state.checklistData) {
-      for (let t in state.checklistData[m]) {
-        state.checklistData[m][t].forEach(item => {
-          if (item.detail === undefined) item.detail = "";
-          if (item.notice === undefined) item.notice = "";
-          if (item.note === undefined) item.note = "";
-        });
-      }
-    }
-
-    // 格式轉換確保
     for (let m in state.events) {
       for (let d in state.events[m]) {
         state.events[m][d] = state.events[m][d].map(evt => {
-          if (typeof evt === 'string') return { text: evt, color: '#e3f2fd', fontColor: '#1e88e5' };
+          if (evt.completed === undefined) evt.completed = false;
           return evt;
         });
       }
@@ -749,7 +682,7 @@
     document.getElementById('new-shared-date').value = defaultDateVal;
     document.getElementById('new-error-date').value = defaultDateVal;
     
-    renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems(); saveToLocalStorage();
+    renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems(); renderRecurringManager(); saveToLocalStorage();
   }
 
   /* ================== 📁 子頁籤功能 ================== */
@@ -783,7 +716,7 @@
     }
   }
 
-  /* ================== 🏷️ Checklist 與分類收縮展開功能 ================== */
+  /* ================== 🏷️ Checklist ================== */
   function toggleCategoryCollapse(catName) {
     collapsedCategories[catName] = !collapsedCategories[catName];
     renderChecklist();
@@ -831,14 +764,12 @@
     categories.forEach(cat => {
       const catItems = monthItems.filter(item => item.category === cat);
       const isCollapsed = !!collapsedCategories[cat];
-      
       const catSection = document.createElement('div'); catSection.className = 'category-section';
       
-      // 分類標題欄增加展開/收縮符號
       catSection.innerHTML = `
         <div class="category-title" onclick="toggleCategoryCollapse('${cat}')">
           <span>${isCollapsed ? '▶' : '▼'} ${cat} (${catItems.length})</span>
-          <small style="font-weight:normal; font-size:12px; color:#666;">(點選可${isCollapsed ? '展開' : '收合'})</small>
+          <small style="font-weight:normal; font-size:12px; color:#666;">(點選可展開/收合)</small>
         </div>
       `;
       
@@ -851,11 +782,12 @@
         catItems.forEach(item => {
           const realIndex = monthItems.indexOf(item);
           const div = document.createElement('div'); div.className = `checklist-item ${item.completed ? 'completed' : ''}`;
+          
           div.innerHTML = `
             <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleChecklistItem(${realIndex})">
-            <span class="item-text">${item.text}</span>
+            <input type="text" class="item-text-input" value="${item.text}" onchange="updateItemName(${realIndex}, this.value)">
             <input type="text" class="detail-input" placeholder="📋 細項格子..." value="${item.detail || ''}" onchange="updateItemDetail(${realIndex}, this.value)">
-            <input type="text" class="notice-input" placeholder="⚠️ 注意事項..." value="${item.notice || ''}" onchange="updateItemNotice(${realIndex}, this.value)">
+            <textarea class="notice-textarea" placeholder="⚠️ 注意事項 (支援回車換行)..." onchange="updateItemNotice(${realIndex}, this.value)">${item.notice || ''}</textarea>
             <input type="text" class="note-input" placeholder="📝 備註..." value="${item.note || ''}" onchange="updateItemNote(${realIndex}, this.value)">
             <button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="deleteChecklistItem(${realIndex})">刪除</button>
           `;
@@ -868,6 +800,7 @@
   }
 
   function toggleChecklistItem(index) { state.checklistData[state.currentMonth][currentSubTab][index].completed = !state.checklistData[state.currentMonth][currentSubTab][index].completed; renderChecklist(); saveToLocalStorage(); }
+  function updateItemName(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].text = value.trim(); saveToLocalStorage(); }
   function updateItemDetail(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].detail = value; saveToLocalStorage(); }
   function updateItemNotice(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].notice = value; saveToLocalStorage(); }
   function updateItemNote(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].note = value; saveToLocalStorage(); }
@@ -875,8 +808,14 @@
   
   function addChecklistItem(e) {
     e.preventDefault();
-    state.checklistData[state.currentMonth][currentSubTab].push({ text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, detail: '', notice: '', note: '' });
-    document.getElementById('new-item-input').value = ''; renderChecklist(); saveToLocalStorage();
+    state.checklistData[state.currentMonth][currentSubTab].push({ 
+      text: document.getElementById('new-item-input').value.trim(), 
+      category: document.getElementById('new-item-category').value, 
+      completed: false, detail: document.getElementById('new-item-detail').value.trim(),
+      notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() 
+    });
+    document.getElementById('new-item-input').value = ''; document.getElementById('new-item-detail').value = ''; document.getElementById('new-item-notice').value = ''; document.getElementById('new-item-note').value = '';
+    renderChecklist(); saveToLocalStorage();
   }
 
   function copyLastMonthChecklist() {
@@ -983,12 +922,18 @@
   function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
   function getFirstDayOfWeek(year, month) { return new Date(year, month - 1, 1).getDay(); }
   
-  /* ================== 📅 行事曆高階渲染、客製化顏色與雙擊修改核心邏輯 ================== */
+  /* ================== 📅 行事曆、雙擊改色、單擊打勾劃刪除線邏輯 ================== */
+  function toggleEventCompleted(day, idx) {
+    // 功能 1：行程點擊（單擊）切換完成狀態（刪除線）
+    if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
+    state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
+    renderCalendar(); saveToLocalStorage();
+  }
+
   function editDayEvent(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     const targetObj = state.events[state.currentMonth][day][idx];
     
-    // 1. 修改內容文字
     const newText = prompt(`請編輯第 ${idx+1} 項行程內容：`, targetObj.text);
     if (newText === null) return;
     
@@ -997,12 +942,10 @@
       if (state.events[state.currentMonth][day].length === 0) delete state.events[state.currentMonth][day];
     } else {
       targetObj.text = newText.trim();
-      
-      // 2. 客製化標籤顏色詢問
-      const newColor = prompt(`設定標籤底色 (可輸入 red, orange, green, #673ab7 等，不改請留空)：`, targetObj.color || '#e3f2fd');
+      // 功能 3：每日工作日程可隨時客製化顏色
+      const newColor = prompt(`設定標籤底色 (可填 red, orange, green, #673ab7 等，留空不改)：`, targetObj.color || '#e3f2fd');
       if (newColor && newColor.trim() !== '') {
         targetObj.color = newColor.trim();
-        // 如果設成比較深的顏色，文字改為白色防吃字
         const darkColors = ['black', 'blue', 'purple', 'red', 'dark'];
         const isDark = darkColors.some(c => newColor.toLowerCase().includes(c)) || newColor.startsWith('#2') || newColor.startsWith('#3');
         targetObj.fontColor = isDark ? '#ffffff' : '#1e88e5';
@@ -1051,22 +994,25 @@
       
       evts.forEach((evtObj, idx) => {
         const tag = document.createElement('div'); 
-        tag.className = 'event-tag'; 
+        tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; 
         tag.draggable = true;
-        
-        // 功能 1：每日的格子工作項目，全自動帶序號 (如 "1. 開會")
         tag.textContent = `${idx + 1}. ${evtObj.text}`;
         
-        // 功能 4：套用客製化色彩
         tag.style.backgroundColor = evtObj.color || '#e3f2fd';
         tag.style.color = evtObj.fontColor || '#1e88e5';
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
 
-        // 綁定雙擊單獨修改這筆事件
-        tag.ondblclick = (event) => {
-          event.stopPropagation(); // 防止點擊標籤時重複觸發格子的雙擊
-          editDayEvent(day, idx);
+        // 單擊觸發完成（劃刪除線）
+        tag.onclick = (event) => {
+          event.stopPropagation();
+          toggleEventCompleted(day, idx);
+        };
+
+        // 雙擊觸發客製化修改與色彩變更
+        tag.ondblclick = (event) => { 
+          event.stopPropagation(); 
+          editDayEvent(day, idx); 
         };
         
         tag.ondragstart = () => { draggedItem = { text: evtObj.text, index: idx }, sourceDay = day; };
@@ -1074,27 +1020,56 @@
         dayDiv.appendChild(tag);
       });
       
-      // 如果格子本身被雙擊，則可以直接在尾端追加一筆全新行程
       dayDiv.ondblclick = (event) => {
         if (event.target === dayDiv || event.target.className === 'day-number') {
           const quickText = prompt(`在此日期 (${day} 號) 快速追加一項工作日程：`);
           if (quickText && quickText.trim() !== '') {
             if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
-            state.events[state.currentMonth][day].push({ text: quickText.trim(), color: '#e3f2fd', fontColor: '#1e88e5' });
+            state.events[state.currentMonth][day].push({ text: quickText.trim(), color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
             renderCalendar(); saveToLocalStorage();
           }
         }
       };
-
       grid.appendChild(dayDiv);
     }
+  }
+
+  /* ================== ⚡ 功能二：範本列表在線即時修改核心 ================== */
+  function updateTemplateCondition(index, field, value) {
+    if (field === 'condition') {
+      // 判斷原範本是工作天還是指定日期
+      if (recurringEventsTemplate[index].workday !== '') {
+        recurringEventsTemplate[index].workday = value.trim();
+      } else {
+        recurringEventsTemplate[index].day = value.trim();
+      }
+    } else if (field === 'text') {
+      recurringEventsTemplate[index].text = value.trim();
+    }
+    saveToLocalStorage();
   }
 
   function renderRecurringManager() {
     const tbody = document.getElementById('recurring-tbody'); tbody.innerHTML = '';
     recurringEventsTemplate.forEach((item, index) => {
-      let conditionText = item.workday ? `💼 工作天: ${item.workday}` : `📅 日期: ${item.day}`;
-      tbody.innerHTML += `<tr><td><b>${conditionText}</b></td><td>${item.text}</td><td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="removeRecurringTemplate(${index})">刪除</button></td></tr>`;
+      let isWorkday = item.workday !== '';
+      let conditionVal = isWorkday ? item.workday : item.day;
+      let labelPrefix = isWorkday ? "💼 工作天: " : "📅 日期: ";
+
+      // 將文字欄位改造成可隨時點擊修改的 input 框
+      tbody.innerHTML += `
+        <tr>
+          <td>
+            <span style="font-size:12px; color:#666;">${labelPrefix}</span>
+            <input type="text" class="table-text-input" value="${conditionVal}" onchange="updateTemplateCondition(${index}, 'condition', this.value)" style="width:70px; font-weight:bold;">
+          </td>
+          <td>
+            <input type="text" class="table-text-input" value="${item.text}" onchange="updateTemplateCondition(${index}, 'text', this.value)">
+          </td>
+          <td>
+            <button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="removeRecurringTemplate(${index})">刪除</button>
+          </td>
+        </tr>`;
     });
   }
   
@@ -1104,56 +1079,34 @@
     let workdayVal = document.getElementById('new-rec-workday').value.trim();
     let textVal = document.getElementById('new-rec-text').value.trim();
     if (!dayVal && !workdayVal) { alert('⚠️ 請填寫指定日期或是工作天數條件！'); return; }
-    
     recurringEventsTemplate.push({ day: dayVal, workday: workdayVal, text: textVal });
     document.getElementById('new-rec-day').value = ''; document.getElementById('new-rec-workday').value = ''; document.getElementById('new-rec-text').value = '';
     renderRecurringManager(); saveToLocalStorage();
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
-  /* ================== ⚡ 功能 2 & 3：進階自動日程派發核心（多筆拆分、多重日期條件） ================== */
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
-    state.events[state.currentMonth] = {}; // 清空原本當月行程
+    state.events[state.currentMonth] = {};
     
     recurringEventsTemplate.forEach(item => {
-      // 1. 拆解行程：支援用中文或英文逗號隔開的多個行程
       const multiTexts = item.text.split(/[,，]/).map(t => t.trim()).filter(t => t !== '');
-      
-      // 2. 蒐集所有要帶入的日期
       let targetDaysArray = [];
       
       if (item.workday) {
-        // 如果是工作天條件，支援逗號輸入多重天數 (如: 1,3,5)
         const workdays = item.workday.split(/[,，]/).map(w => w.trim()).filter(w => w !== '');
-        workdays.forEach(w => {
-          let dNum = getActualDayFromWorkday(year, month, w);
-          if (dNum) targetDaysArray.push(dNum);
-        });
+        workdays.forEach(w => { let dNum = getActualDayFromWorkday(year, month, w); if (dNum) targetDaysArray.push(dNum); });
       } else if (item.day) {
-        // 如果是日期條件，支援逗號輸入多個號碼 (如: 5,10,20,last)
         const days = item.day.split(/[,，]/).map(d => d.trim().toLowerCase()).filter(d => d !== '');
-        days.forEach(d => {
-          let dNum = (d === 'last') ? lastDay : Number(d);
-          if (dNum && dNum <= lastDay) targetDaysArray.push(dNum);
-        });
+        days.forEach(d => { let dNum = (d === 'last') ? lastDay : Number(d); if (dNum && dNum <= lastDay) targetDaysArray.push(dNum); });
       }
 
-      // 3. 雙重迴圈，將所有日期與所有行程交叉配對派發，並且會在渲染時自動帶序號
       targetDaysArray.forEach(td => {
         if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
-        
-        multiTexts.forEach(txt => {
-          state.events[state.currentMonth][td].push({
-            text: txt,
-            color: '#e3f2fd', // 預設柔和藍
-            fontColor: '#1e88e5'
-          });
-        });
+        multiTexts.forEach(txt => { state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false }); });
       });
     });
-    
-    renderCalendar(); saveToLocalStorage(); alert('⚡ 所有進階多重條件、多筆拆分日程已全自動派發並完成序號編排！');
+    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已全自動派發完成！');
   }
 
   window.onload = function() {
