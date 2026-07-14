@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (自由插隊與2026國定放假版)</title>
+  <title>工作儀表板 (批量管理與今日定位版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -34,195 +34,46 @@
       transition: background-color 0.3s;
       position: relative;
     }
-    h1 {
-      margin: 0;
-      font-size: 24px;
-      outline: none;
-    }
-    h1:hover, .header-desc:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    h1 { margin: 0; font-size: 24px; outline: none; }
+    h1:hover, .header-desc:hover { background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; cursor: pointer; }
     .admin-badge {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background-color: #2c3e50;
-      color: #f1c40f;
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: bold;
-      border: 1px solid #f1c40f;
+      position: absolute; top: 20px; right: 20px; background-color: #2c3e50; color: #f1c40f; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; border: 1px solid #f1c40f;
     }
     
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e0e0e0;
-      padding-bottom: 10px;
-    }
-    .tab-btn {
-      padding: 10px 20px;
-      font-size: 16px;
-      font-weight: bold;
-      border: none;
-      background-color: #e0e0e0;
-      color: #666;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      background-color: var(--primary-color);
-      color: white;
-      box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
-    }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+    .tab-btn { padding: 10px 20px; font-size: 16px; font-weight: bold; border: none; background-color: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background-color: var(--primary-color); color: white; box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3); }
 
-    .sub-tabs-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      background-color: #f0f0f0;
-      padding: 10px;
-      border-radius: 8px;
-      flex-wrap: wrap;
-    }
-    .sub-tab-btn {
-      padding: 6px 15px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      background-color: #fff;
-      color: #333;
-      border-radius: 4px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .sub-tab-btn.active {
-      background-color: var(--primary-color);
-      color: #fff;
-      border-color: var(--primary-color);
-      font-weight: bold;
-    }
-    .delete-subtab {
-      color: #ff4d4d;
-      font-weight: bold;
-      cursor: pointer;
-    }
+    .sub-tabs-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background-color: #f0f0f0; padding: 10px; border-radius: 8px; flex-wrap: wrap; }
+    .sub-tab-btn { padding: 6px 15px; font-size: 14px; border: 1px solid #ccc; background-color: #fff; color: #333; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .sub-tab-btn.active { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: bold; }
+    .delete-subtab { color: #ff4d4d; font-weight: bold; cursor: pointer; }
 
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
-    .card {
-      background-color: white;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      border: 1px solid #e0e0e0;
-      margin-bottom: 20px;
-    }
-    .card-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 0;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #f0f0f0;
-      color: var(--primary-color);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: color 0.3s;
-    }
-    select, input, button, textarea {
-      font-family: inherit;
-    }
-    select, input[type="text"], input[type="date"], input[type="color"], input[type="number"], textarea {
-      padding: 6px 10px;
-      font-size: 14px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
+    .card { background-color: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; margin-bottom: 20px; }
+    .card-title { font-size: 18px; font-weight: bold; margin-top: 0; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; transition: color 0.3s; }
+    select, input, button, textarea { font-family: inherit; }
+    select, input[type="text"], input[type="date"], input[type="color"], input[type="number"], textarea { padding: 6px 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
 
-    .control-bar {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      background-color: #fff;
-      padding: 10px 15px;
-      border-radius: 6px;
-      border: 1px solid #e0e0e0;
-      flex-wrap: wrap;
-    }
-
-    .sync-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background-color: #e3f2fd;
-      border: 1px solid #90caf9;
-      padding: 10px 15px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
+    .control-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 20px; background-color: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #e0e0e0; flex-wrap: wrap; }
+    .sync-bar { display: flex; align-items: center; gap: 10px; background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; flex-wrap: wrap; }
 
     .category-section { margin-bottom: 25px; }
-    .category-title {
-      font-size: 15px;
-      font-weight: bold;
-      color: #555;
-      background-color: #eaeaea;
-      padding: 8px 12px;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      user-select: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    .category-title { font-size: 15px; font-weight: bold; color: #555; background-color: #eaeaea; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
     .category-title:hover { background-color: #dfdfdf; }
     .category-items-box { display: block; }
     .category-items-box.collapsed { display: none; }
 
-    .checklist-item {
-      display: flex;
-      align-items: stretch;
-      gap: 10px;
-      margin-bottom: 8px;
-      padding: 8px 12px;
-      border-radius: 4px;
-      background-color: #fafafa;
-      border: 1px solid #f0f0f0;
-      flex-wrap: wrap;
-    }
+    .checklist-item { display: flex; align-items: stretch; gap: 10px; margin-bottom: 8px; padding: 8px 12px; border-radius: 4px; background-color: #fafafa; border: 1px solid #f0f0f0; flex-wrap: wrap; }
     .checklist-item input[type="checkbox"] { transform: scale(1.2); cursor: pointer; align-self: center; }
-    
-    .checklist-item .item-text-input {
-      flex: 1.8; min-width: 140px; font-size: 14px; border: 1px solid transparent; background-color: transparent; cursor: text;
-    }
+    .checklist-item .item-text-input { flex: 1.8; min-width: 140px; font-size: 14px; border: 1px solid transparent; background-color: transparent; cursor: text; }
     .checklist-item .item-text-input:hover { background-color: #fff; border-color: #ddd; }
     .checklist-item .item-text-input:focus { background-color: #fff; border-color: var(--primary-color); outline: none; }
     .checklist-item.completed .item-text-input { text-decoration: line-through; color: #888; }
-    
-    .checklist-item .detail-input, .checklist-item .note-input {
-      flex: 1.5; padding: 6px 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; min-width: 120px; align-self: center;
-    }
-    .checklist-item .notice-textarea {
-      flex: 2; padding: 5px 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; min-width: 160px; resize: vertical; height: 34px; min-height: 34px;
-    }
+    .checklist-item .detail-input, .checklist-item .note-input { flex: 1.5; padding: 6px 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; min-width: 120px; align-self: center; }
+    .checklist-item .notice-textarea { flex: 2; padding: 5px 8px; font-size: 13px; border: 1px solid #ddd; border-radius: 4px; background-color: #fff; min-width: 160px; resize: vertical; height: 34px; min-height: 34px; }
 
     .btn { background-color: var(--primary-color); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
     .btn:hover { opacity: 0.9; }
@@ -236,9 +87,7 @@
     .mega-field { display: flex; flex-direction: column; gap: 5px; }
     .mega-field label { font-size: 12px; font-weight: bold; color: #666; }
 
-    .table-text-input {
-      width: 90%; font-size: 13px; border: 1px solid transparent; background-color: transparent; padding: 4px; border-radius: 3px;
-    }
+    .table-text-input { width: 90%; font-size: 13px; border: 1px solid transparent; background-color: transparent; padding: 4px; border-radius: 3px; }
     .table-text-input:hover { background-color: #fff; border-color: #ccc; }
     .table-text-input:focus { background-color: #fff; border-color: var(--primary-color); outline: none; }
 
@@ -247,23 +96,35 @@
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
     .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 12px; }
     
-    .calendar-day { min-height: 110px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; }
+    /* 🏆 今天日期特殊黃金發光邊框 */
+    .calendar-day { min-height: 115px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; position: relative; }
+    .calendar-day.today-highlight { border: 2px solid #f1c40f !important; background-color: #fffdf0; box-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
     .calendar-day.drag-over { background-color: #e3f2fd; border: 2px dashed #1e88e5; }
     .calendar-day:hover { background-color: #f5f9ff; }
     .calendar-day.empty { background-color: #fafafa; cursor: default; }
     .day-number { font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #666; }
     
+    /* 📍 🏆今天 智慧標籤樣式 */
+    .today-tag { position: absolute; top: 4px; right: 4px; background-color: #f1c40f; color: #2c3e50; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
+
     .event-tag {
-      font-size: 11px; padding: 3px 6px; border-radius: 3px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
+      font-size: 11px; padding: 3px 4px; border-radius: 3px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
+      display: flex; justify-content: space-between; align-items: center;
     }
     .event-tag.completed { text-decoration: line-through !important; opacity: 0.45; }
-    .event-tag:active { cursor: grabbing; }
-
-    /* 2026 行政院國定假日專用特殊紅色小標籤 */
-    .holiday-tag {
-      background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default;
-    }
     
+    /* 同天排序微調小按鈕 */
+    .sort-arrows { display: inline-flex; gap: 2px; margin-left: auto; opacity: 0.3; }
+    .event-tag:hover .sort-arrows { opacity: 1; }
+    .sort-btn { cursor: pointer; font-size: 9px; padding: 0 1px; color: inherit; font-weight: bold; }
+    .sort-btn:hover { background: rgba(0,0,0,0.1); border-radius: 2px; }
+
+    .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; }
+    
+    /* 🗑️ 大量多選管理池專用樣式 */
+    .batch-box { background-color: #f4ecf7; border: 2px dashed #9b59b6; border-radius: 6px; padding: 12px; margin-top: 15px; }
+    .batch-item { display: inline-flex; align-items: center; background: #fff; border: 1px solid #9b59b6; padding: 2px 8px; border-radius: 4px; font-size: 12px; gap: 6px; margin: 3px; }
+
     .sidebar-list-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; gap: 10px; }
     .sidebar-list-item.completed span { text-decoration: line-through; color: #888; }
     .sidebar-list-item .date-tag { background-color: #f0f0f0; color: #555; padding: 1px 5px; border-radius: 3px; font-size: 11px; white-space: nowrap; }
@@ -315,10 +176,8 @@
         <span id="checklist-card-title-text">工作項目 Checklist</span>
         <button class="btn btn-orange" onclick="copyLastMonthChecklist()">📋 複製上月工作項目到本月</button>
       </div>
-      
       <div id="checklist-category-container"></div>
 
-      <!-- 功能 3：全欄位一鍵新增，去除所有的 Placeholder 提示詞 -->
       <div class="mega-add-box">
         <form onsubmit="addChecklistItem(event)">
           <div class="mega-add-grid">
@@ -375,7 +234,7 @@
       <div>
         <div class="card">
           <div class="card-title" style="border-bottom: none; margin-bottom: 0;">
-            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 單擊完成項目 / 雙擊項目改色與移除 / <b>支援滑鼠任意拖曳移動行程</b>)</small></span>
+            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 點箭頭<b>上下調同天排序</b> / 拖曳至右下大量清除與搬移)</small></span>
             <button class="btn" onclick="applyRecurringEvents()">⚡ 一鍵安排當月固定日程</button>
           </div>
           <div class="calendar-header">
@@ -404,7 +263,7 @@
         </div>
       </div>
 
-      <!-- 右欄 -->
+      <!-- 右欄與大量多選暫存池 -->
       <div>
         <div class="card" style="border: 1px solid #f1c40f;">
           <div class="card-title" style="color: #f39c12;"><span>⭐ 本月重要事項</span></div>
@@ -415,7 +274,7 @@
             </div>
             <button type="submit" class="btn" style="width: 100%; background-color: #f39c12;">新增重要事項</button>
           </form>
-          <div id="important-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
+          <div id="important-items-container" style="min-height: 80px; max-height: 140px; overflow-y: auto;"></div>
         </div>
 
         <div class="card" style="border: 1px solid #34495e;">
@@ -427,7 +286,18 @@
             </div>
             <button type="submit" class="btn" style="width: 100%; background-color: #34495e;">新增備忘項目</button>
           </form>
-          <div id="memo-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
+          <div id="memo-items-container" style="min-height: 80px; max-height: 140px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- 功能 3：大量選取、多選刪除或拖移與移動資源池 -->
+        <div class="card batch-box" id="batch-drop-pool">
+          <div style="font-weight: bold; color: #8e44ad; font-size: 14px; margin-bottom: 8px;">📦 批量清除與大筆移動資源籃</div>
+          <div style="font-size: 11px; color:#666; margin-bottom: 10px;">(💡 直接把月曆上的任何行程「用滑鼠拖進來這裡」放開即可暫存大量管理)</div>
+          <div id="batch-items-list" style="min-height: 40px; max-height: 140px; overflow-y: auto; background: #fff; border: 1px dashed #ccc; padding: 6px; border-radius: 4px;"></div>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px; flex: 1;" onclick="clearBatchPool(true)">🔥 批量全刪除</button>
+            <button class="btn btn-success" style="padding: 4px 10px; font-size: 12px; flex: 1;" onclick="moveBatchPoolToDay()">🚀 一併移到某天</button>
+          </div>
         </div>
 
         <div class="card">
@@ -439,11 +309,11 @@
             </div>
             <button type="submit" class="btn btn-success" style="width: 100%;">新增共享事項</button>
           </form>
-          <div id="shared-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
+          <div id="shared-items-container" style="min-height: 80px; max-height: 120px; overflow-y: auto;"></div>
         </div>
 
         <div class="card">
-          <div class="card-title" style="color: #e74c3c;"><span>❌ 錯誤事項 / 待檢討改善</span></div>
+          <div class="card-title"><span>❌ 錯誤事項 / 待檢討改善</span></div>
           <form class="add-item-form" onsubmit="addErrorItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
               <input type="date" id="new-error-date" required>
@@ -451,7 +321,7 @@
             </div>
             <button type="submit" class="btn btn-danger" style="width: 100%;">新增錯誤記錄</button>
           </form>
-          <div id="error-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
+          <div id="error-items-container" style="min-height: 80px; max-height: 120px; overflow-y: auto;"></div>
         </div>
       </div>
     </div>
@@ -469,13 +339,9 @@
   let currentSubTab = '主頁面';
   let collapsedCategories = {};
 
-  // 🧱 2026 最新行政院辦公放假行事曆數據庫
   const TAIWAN_HOLIDAYS_2026 = {
     "2026-01": { 1: "元旦" },
-    "2026-02": { 
-      14: "春節連假", 15: "春節連假", 16: "除夕", 17: "春節", 18: "春節", 
-      19: "春節", 20: "春節(補假)", 21: "春節連假", 22: "春節連假", 27: "228連假(補假)", 28: "和平紀念日" 
-    },
+    "2026-02": { 14: "春節連假", 15: "春節連假", 16: "除夕", 17: "春節", 18: "春節", 19: "春節", 20: "春節(補假)", 21: "春節連假", 22: "春節連假", 27: "228連假(補假)", 28: "和平紀念日" },
     "2026-03": { 1: "228連假" },
     "2026-04": { 3: "兒童節(補假)", 4: "兒童節", 5: "清明節", 6: "清明節(補假)" },
     "2026-05": { 1: "勞動節", 2: "勞動連假", 3: "勞動連假" },
@@ -495,6 +361,9 @@
     errorItems: {}
   };
 
+  // 批量資源池暫存陣列
+  let batchPoolArray = [];
+
   let recurringEventsTemplate = [
     { day: '1', workday: '', text: '填寫上月工時表' },
     { day: '', workday: '3', text: '每月第3個工作天固定會議' },
@@ -503,37 +372,26 @@
     { day: 'last', workday: '', text: '系統資料備份' }
   ];
 
-  let headerData = {
-    title: "工作儀表板 Ultimate Pro",
-    desc: "精準控制版：選單最多開放至當年底，11月自動解鎖下一整年度，並完整保留歷史過往月份。"
-  };
+  let headerData = { title: "工作儀表板 Ultimate Pro", desc: "精準控制版：選單最多開放至當年底，11月自動解鎖下一整年度，並完整保留歷史過往月份。" };
 
   function exportBackupFile() {
     const backupData = { categories, state, subTabs, currentSubTab, recurringEventsTemplate, headerData };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `工作儀表板備份_${state.currentMonth}.txt`;
-    link.click();
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `工作儀表板備份_${state.currentMonth}.txt`; link.click();
   }
 
   function importBackupFile(input) {
-    const file = input.files[0];
-    if (!file) return;
+    const file = input.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
         const decodedData = JSON.parse(e.target.result);
         categories = decodedData.categories || ['核心專案', '行政/例行', '跨部門協作'];
-        subTabs = decodedData.subTabs || ['主頁面'];
-        currentSubTab = decodedData.currentSubTab || '主頁面';
-        state = decodedData.state;
-        globalSwitchMonth();
-        alert("🎉 備份資料已 100% 成功匯入還原！");
+        subTabs = decodedData.subTabs || ['主頁面']; currentSubTab = decodedData.currentSubTab || '主頁面'; state = decodedData.state;
+        globalSwitchMonth(); alert("🎉 備份資料已 100% 成功匯入還原！");
       } catch (err) { alert("❌ 匯入失敗！"); }
     };
-    reader.readAsText(file);
-    input.value = "";
+    reader.readAsText(file); input.value = "";
   }
 
   function saveToLocalStorage() {
@@ -567,29 +425,17 @@
   }
 
   function updateThemeColors() {
-    const primaryColor = document.getElementById('theme-primary').value;
-    const bgColor = document.getElementById('theme-bg').value;
-    applyThemeStyles(primaryColor, bgColor);
-    localStorage.setItem('theme_primary_color', primaryColor);
-    localStorage.setItem('theme_bg_color', bgColor);
+    const primaryColor = document.getElementById('theme-primary').value; const bgColor = document.getElementById('theme-bg').value;
+    applyThemeStyles(primaryColor, bgColor); localStorage.setItem('theme_primary_color', primaryColor); localStorage.setItem('theme_bg_color', bgColor);
   }
+  function applyThemeStyles(primary, bg) { document.getElementById('custom-theme-styles').innerHTML = `:root { --primary-color: ${primary}; --bg-color: ${bg}; }`; }
+  function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
-  function applyThemeStyles(primary, bg) {
-    document.getElementById('custom-theme-styles').innerHTML = `:root { --primary-color: ${primary}; --bg-color: ${bg}; }`;
-  }
-
-  function resetThemeColors() {
-    document.getElementById('theme-primary').value = '#4a90e2';
-    document.getElementById('theme-bg').value = '#f8f9fa';
-    updateThemeColors();
-  }
-
-  function saveHeaderData() { saveToLocalStorage(); }
-
+  // 功能 2：儀表板月份起點從 2026 年 01 月開始，以前的歷史月份皆不需要存在
   function generateMonthOptions() {
     const select = document.getElementById('month-select'); select.innerHTML = '';
-    let startYear = REAL_CURRENT_YEAR - 1; let endYear = REAL_CURRENT_YEAR;
-    if (REAL_CURRENT_MONTH >= 11) { endYear = REAL_CURRENT_YEAR + 1; }
+    let startYear = 2026; let endYear = 2026;
+    if (REAL_CURRENT_MONTH >= 11) { endYear = 2027; }
     let dateCursor = new Date(startYear, 0, 1); const endDate = new Date(endYear, 11, 1);
     while (dateCursor <= endDate) {
       let y = dateCursor.getFullYear(); let m = dateCursor.getMonth() + 1;
@@ -623,11 +469,8 @@
   function globalSwitchMonth() {
     state.currentMonth = document.getElementById('month-select').value;
     const defaultDateVal = `${state.currentMonth}-01`;
-    document.getElementById('new-important-date').value = defaultDateVal;
-    document.getElementById('new-memo-date').value = defaultDateVal;
-    document.getElementById('new-shared-date').value = defaultDateVal;
-    document.getElementById('new-error-date').value = defaultDateVal;
-    renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems(); renderRecurringManager(); saveToLocalStorage();
+    document.getElementById('new-important-date').value = defaultDateVal; document.getElementById('new-memo-date').value = defaultDateVal; document.getElementById('new-shared-date').value = defaultDateVal; document.getElementById('new-error-date').value = defaultDateVal;
+    batchPoolArray = []; renderBatchPool(); renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems(); renderRecurringManager(); saveToLocalStorage();
   }
 
   /* ================== 子頁籤 ================== */
@@ -648,26 +491,17 @@
   }
   function deleteSubTab(event, name) {
     event.stopPropagation();
-    if (confirm(`確定要刪除「${name}」整個分頁嗎？`)) {
+    if (confirm(`確定要刪除整個分頁嗎？`)) {
       subTabs = subTabs.filter(t => t !== name); if (state.checklistData[state.currentMonth]) delete state.checklistData[state.currentMonth][name];
       currentSubTab = '主頁面'; renderSubTabs(); renderChecklist(); saveToLocalStorage();
     }
   }
 
-  /* ================== 🏷️ Checklist & 插隊功能 ================== */
+  /* ================== 🏷️ Checklist ================== */
   function toggleCategoryCollapse(catName) { collapsedCategories[catName] = !collapsedCategories[catName]; renderChecklist(); }
-  
-  // 功能 1：任意位置插隊功能
   function insertChecklistItemInline(realIndex) {
-    const quickText = prompt("請在此項目下方插入新的工作項目內容：");
-    if (!quickText || quickText.trim() === '') return;
-    
-    // 直接往該陣列的指定索引後方塞入新物件
-    state.checklistData[state.currentMonth][currentSubTab].splice(realIndex + 1, 0, {
-      text: quickText.trim(),
-      category: state.checklistData[state.currentMonth][currentSubTab][realIndex].category,
-      completed: false, detail: '', notice: '', note: ''
-    });
+    const quickText = prompt("請在此項目下方插入新的工作項目內容："); if (!quickText || quickText.trim() === '') return;
+    state.checklistData[state.currentMonth][currentSubTab].splice(realIndex + 1, 0, { text: quickText.trim(), category: state.checklistData[state.currentMonth][currentSubTab][realIndex].category, completed: false, detail: '', notice: '', note: '' });
     renderChecklist(); saveToLocalStorage();
   }
 
@@ -687,8 +521,7 @@
   }
 
   function deleteCategory(index) {
-    const removedCat = categories[index];
-    categories.splice(index, 1);
+    const removedCat = categories[index]; categories.splice(index, 1);
     for (let m in state.checklistData) { for (let t in state.checklistData[m]) { state.checklistData[m][t].forEach(item => { if (item.category === removedCat) item.category = categories[0]; }); } }
     renderCategoriesManager(); renderChecklist(); saveToLocalStorage();
   }
@@ -736,10 +569,7 @@
   
   function addChecklistItem(e) {
     e.preventDefault();
-    state.checklistData[state.currentMonth][currentSubTab].push({ 
-      text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, 
-      detail: document.getElementById('new-item-detail').value.trim(), notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() 
-    });
+    state.checklistData[state.currentMonth][currentSubTab].push({ text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, detail: document.getElementById('new-item-detail').value.trim(), notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() });
     document.getElementById('new-item-input').value = ''; document.getElementById('new-item-detail').value = ''; document.getElementById('new-item-notice').value = ''; document.getElementById('new-item-note').value = '';
     renderChecklist(); saveToLocalStorage();
   }
@@ -819,30 +649,38 @@
   function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
   function getFirstDayOfWeek(year, month) { return new Date(year, month - 1, 1).getDay(); }
   
-  /* ================== 📅 行事曆、拖曳移動與客製化色彩移除功能 ================== */
+  /* ================== 📅 行事曆、同天內上下排序與批量暫存池核心邏輯 ================== */
   function toggleEventCompleted(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
     renderCalendar(); saveToLocalStorage();
   }
 
+  // 功能 1：同一天之內上下微調行程順序排序
+  function sortDayEvent(day, idx, direction) {
+    if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
+    const arr = state.events[state.currentMonth][day];
+    if (direction === 'up' && idx > 0) {
+      const temp = arr[idx]; arr[idx] = arr[idx - 1]; arr[idx - 1] = temp;
+    } else if (direction === 'down' && idx < arr.length - 1) {
+      const temp = arr[idx]; arr[idx] = arr[idx + 1]; arr[idx + 1] = temp;
+    }
+    renderCalendar(); saveToLocalStorage();
+  }
+
   function editDayEvent(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     const targetObj = state.events[state.currentMonth][day][idx];
-    
-    const newText = prompt("請編輯行程內容文字：", targetObj.text);
-    if (newText === null) return;
+    const newText = prompt("請編輯行程內容文字：", targetObj.text); if (newText === null) return;
     
     if (newText.trim() === '') {
       state.events[state.currentMonth][day].splice(idx, 1);
       if (state.events[state.currentMonth][day].length === 0) delete state.events[state.currentMonth][day];
     } else {
       targetObj.text = newText.trim();
-      
-      // 功能 5：移除顏色。提示輸入 x 恢復預設色
-      const newColor = prompt("設定標籤底色 (填色名/代碼。若要拿掉顏色回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
+      const newColor = prompt("設定標籤底色 (填色名。若要拿掉顏色回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
       if (!newColor || newColor.trim() === '' || newColor.trim().toLowerCase() === 'x') {
-        targetObj.color = '#e3f2fd'; targetObj.fontColor = '#1e88e5'; // 變回預設柔和藍
+        targetObj.color = '#e3f2fd'; targetObj.fontColor = '#1e88e5';
       } else {
         targetObj.color = newColor.trim();
         const darkColors = ['black', 'blue', 'purple', 'red', 'dark'];
@@ -851,6 +689,56 @@
       }
     }
     renderCalendar(); saveToLocalStorage();
+  }
+
+  // 設置拖曳資源籃大箱子事件
+  const poolBox = document.getElementById('batch-drop-pool');
+  poolBox.ondragover = (e) => { e.preventDefault(); poolBox.style.backgroundColor = '#ebdef0'; };
+  poolBox.ondragleave = () => { poolBox.style.backgroundColor = '#f4ecf7'; };
+  poolBox.ondrop = (e) => {
+    e.preventDefault(); poolBox.style.backgroundColor = '#f4ecf7';
+    if (draggedItem !== null && sourceDay !== null) {
+      // 從原日期取出物件
+      const extractedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
+      if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
+      
+      // 功能 3：推入大量暫存控制陣列籃
+      batchPoolArray.push(extractedObj);
+      renderCalendar(); renderBatchPool(); saveToLocalStorage();
+    }
+  };
+
+  function renderBatchPool() {
+    const listDiv = document.getElementById('batch-items-list'); listDiv.innerHTML = '';
+    if (batchPoolArray.length === 0) { listDiv.innerHTML = '<span style="color:#aaa; font-style:italic; font-size:12px;">籃子目前是空的。</span>'; return; }
+    batchPoolArray.forEach((item, idx) => {
+      listDiv.innerHTML += `
+        <div class="batch-item" style="background:${item.color}; color:${item.fontColor};">
+          <span>${item.text}</span>
+          <span style="color:#e74c3c; font-weight:bold; cursor:pointer;" onclick="removeItemFromPool(${idx})">×</span>
+        </div>`;
+    });
+  }
+  function removeItemFromPool(idx) { batchPoolArray.splice(idx, 1); renderBatchPool(); }
+  
+  function clearBatchPool(confirmNeed) {
+    if (confirmNeed && batchPoolArray.length > 0) {
+      if (!confirm(`確定要將這 ${batchPoolArray.length} 項暫存項目通通大量刪除嗎？`)) return;
+    }
+    batchPoolArray = []; renderBatchPool();
+  }
+
+  function moveBatchPoolToDay() {
+    if (batchPoolArray.length === 0) return;
+    const targetDayStr = prompt(`請輸入要把這 ${batchPoolArray.length} 項行程一併大量搬移到幾號？(例如輸入: 15)`);
+    if (!targetDayStr) return; const dayNum = parseInt(targetDayStr);
+    const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
+    if (isNaN(dayNum) || dayNum < 1 || dayNum > lastDay) { alert("⚠️ 輸入日期不正確！"); return; }
+
+    if (!state.events[state.currentMonth][dayNum]) state.events[state.currentMonth][dayNum] = [];
+    batchPoolArray.forEach(item => { state.events[state.currentMonth][dayNum].push(item); });
+    
+    clearBatchPool(false); renderCalendar(); saveToLocalStorage(); alert(`🚀 成功將項目大量整批挪動至 ${dayNum} 號！`);
   }
 
   let draggedItem = null; let sourceDay = null;
@@ -867,15 +755,21 @@
     for (let i = 0; i < firstDayIndex; i++) { const emp = document.createElement('div'); emp.className = 'calendar-day empty'; grid.appendChild(emp); }
     
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
-    
-    // 檢查是否有當月國定放假資訊庫
-    const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
-    const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`; const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
+
+    // 功能 4：根據當下裝置的真實時間，在「今天」的日期格子畫上特殊發光標籤
+    const systemDate = new Date();
+    const isCurrentDashboardYearMonth = (systemDate.getFullYear() === year && (systemDate.getMonth() + 1) === month);
 
     for (let day = 1; day <= totalDays; day++) {
       const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.dataset.day = day;
       
-      // 功能 2：每日行程滑鼠拖曳移動與換格子事件
+      // 比對確認是否為「🏆今天」的格子
+      if (isCurrentDashboardYearMonth && systemDate.getDate() === day) {
+        dayDiv.classList.add('today-highlight');
+        dayDiv.innerHTML = `<div class="today-tag">🏆 今天</div>`;
+      }
+
       dayDiv.ondragover = (e) => { e.preventDefault(); dayDiv.classList.add('drag-over'); };
       dayDiv.ondragleave = () => { dayDiv.classList.remove('drag-over'); };
       dayDiv.ondrop = (e) => {
@@ -892,17 +786,21 @@
         }
       };
 
-      dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
-      
-      // 功能 6：行政院人事局放假提醒標籤自動注入
-      if (holidayConfig[day]) {
-        dayDiv.innerHTML += `<div class="holiday-tag">🏮 ${holidayConfig[day]}</div>`;
-      }
+      dayDiv.innerHTML += `<div class="day-number">${day}</div>`;
+      if (holidayConfig[day]) dayDiv.innerHTML += `<div class="holiday-tag">🏮 ${holidayConfig[day]}</div>`;
 
       const evts = state.events[state.currentMonth][day] || [];
       evts.forEach((evtObj, idx) => {
         const tag = document.createElement('div'); tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; tag.draggable = true;
-        tag.textContent = `${idx + 1}. ${evtObj.text}`;
+        
+        // 渲染文字序號與功能 1 的同天內上下排序小按鈕
+        tag.innerHTML = `
+          <span>${idx + 1}. ${evtObj.text}</span>
+          <div class="sort-arrows">
+            <span class="sort-btn" onclick="event.stopPropagation(); sortDayEvent(${day}, ${idx}, 'up')">▲</span>
+            <span class="sort-btn" onclick="event.stopPropagation(); sortDayEvent(${day}, ${idx}, 'down')">▼</span>
+          </div>`;
+        
         tag.style.backgroundColor = evtObj.color || '#e3f2fd'; tag.style.color = evtObj.fontColor || '#1e88e5';
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
@@ -915,7 +813,7 @@
       });
       
       dayDiv.ondblclick = (event) => {
-        if (event.target === dayDiv || event.target.className === 'day-number') {
+        if (event.target === dayDiv || event.target.className === 'day-number' || event.target.className === 'today-tag') {
           const quickText = prompt(`在此日期 (${day} 號) 追加一項日程：`);
           if (quickText && quickText.trim() !== '') {
             if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
@@ -958,7 +856,6 @@
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
-  // 功能 4：一鍵帶入固定日程，追加至末端，100% 不覆蓋、不洗掉原有的行程
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
@@ -966,7 +863,6 @@
     recurringEventsTemplate.forEach(item => {
       const multiTexts = item.text.split(/[,，]/).map(t => t.trim()).filter(t => t !== '');
       let targetDaysArray = [];
-      
       if (item.workday) {
         const workdays = item.workday.split(/[,，]/).map(w => w.trim()).filter(w => w !== '');
         workdays.forEach(w => { let dNum = getActualDayFromWorkday(year, month, w); if (dNum) targetDaysArray.push(dNum); });
@@ -974,25 +870,20 @@
         const days = item.day.split(/[,，]/).map(d => d.trim().toLowerCase()).filter(d => d !== '');
         days.forEach(d => { let dNum = (d === 'last') ? lastDay : Number(d); if (dNum && dNum <= lastDay) targetDaysArray.push(dNum); });
       }
-
       targetDaysArray.forEach(td => {
         if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
-        
         multiTexts.forEach(txt => {
-          // 檢查：如果此行程文字在當天已經存在，就不重複追加，防止洗版
           let isExist = state.events[state.currentMonth][td].some(e => e.text === txt);
-          if (!isExist) {
-            state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
-          }
+          if (!isExist) state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
         });
       });
     });
-    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加，原先設定與客製化項目皆安好保留！');
+    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加！');
   }
 
   window.onload = function() {
     loadFromLocalStorage(); generateMonthOptions(); renderCategoriesManager();
-    renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems();
+    globalSwitchMonth();
   };
 </script>
 </body>
