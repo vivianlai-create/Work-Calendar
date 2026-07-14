@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (完美四大欄位版)</title>
+  <title>工作儀表板 (智慧序號與客製化顏色版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -186,10 +186,25 @@
       font-weight: bold;
       color: #555;
       background-color: #eaeaea;
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-radius: 4px;
       margin-bottom: 10px;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+    .category-title:hover {
+      background-color: #dfdfdf;
+    }
+    .category-items-box {
+      display: block;
+    }
+    .category-items-box.collapsed {
+      display: none;
+    }
+
     .checklist-item {
       display: flex;
       align-items: center;
@@ -214,7 +229,6 @@
       color: #888;
     }
     
-    /* 細項、注意事項、備註輸入框統一樣式 */
     .checklist-item .detail-input,
     .checklist-item .notice-input,
     .checklist-item .note-input {
@@ -267,7 +281,7 @@
     }
     
     .calendar-day {
-      min-height: 95px;
+      min-height: 105px;
       border: 1px solid #eee;
       border-radius: 4px;
       padding: 5px;
@@ -284,8 +298,6 @@
     .day-number { font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #666; }
     
     .event-tag {
-      background-color: #e3f2fd;
-      color: #1e88e5;
       font-size: 11px;
       padding: 3px 6px;
       border-radius: 3px;
@@ -293,9 +305,9 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      border-left: 3px solid #1e88e5;
       cursor: grab;
       user-select: none;
+      font-weight: 500;
     }
     .event-tag:active {
       cursor: grabbing;
@@ -373,6 +385,7 @@
         <button class="btn btn-orange" onclick="copyLastMonthChecklist()">📋 複製上月工作項目到本月</button>
       </div>
       
+      <!-- 工作清單大容器 -->
       <div id="checklist-category-container"></div>
 
       <form class="add-item-form" onsubmit="addChecklistItem(event)">
@@ -409,7 +422,7 @@
       <div>
         <div class="card">
           <div class="card-title" style="border-bottom: none; margin-bottom: 0;">
-            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 雙擊格子編輯 / <b>按住滑鼠直接拖移項目換日期</b>)</small></span>
+            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 雙擊格可<b>修改行程與設定自訂顏色標籤</b> / 支援拖移)</small></span>
             <button class="btn" onclick="applyRecurringEvents()">⚡ 一鍵安排當月固定日程</button>
           </div>
           <div class="calendar-header">
@@ -421,17 +434,17 @@
         <div class="card">
           <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目</span></div>
           <form class="inline-form" onsubmit="addRecurringTemplate(event)">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定日期：</label>
-            <input type="text" id="new-rec-day" placeholder="如: 5 或 last">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 工作天：</label>
-            <input type="number" id="new-rec-workday" placeholder="第幾個工作天 (如: 3)" min="1" max="23">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">📝 日程內容：</label>
-            <input type="text" id="new-rec-text" placeholder="行程名稱" style="flex-grow: 1;" required>
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定日期 (可隔開)：</label>
+            <input type="text" id="new-rec-day" placeholder="如: 5,10,20 或 last">
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 工作天 (可隔開)：</label>
+            <input type="text" id="new-rec-workday" placeholder="如: 1,3,5">
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">📝 日程內容 (可用逗號輸入多筆)：</label>
+            <input type="text" id="new-rec-text" placeholder="如: 開晨會,填寫工時" style="flex-grow: 1;" required>
             <button type="submit" class="btn btn-success">新增固定項目</button>
           </form>
           <table class="recurring-table">
             <thead>
-              <tr><th style="width: 150px;">自動帶入條件</th><th>日程內容</th><th style="width: 70px;">操作</th></tr>
+              <tr><th style="width: 200px;">自動帶入條件</th><th>日程內容 (支援多筆拆分)</th><th style="width: 70px;">操作</th></tr>
             </thead>
             <tbody id="recurring-tbody"></tbody>
           </table>
@@ -506,10 +519,13 @@
   let subTabs = ['主頁面'];
   let currentSubTab = '主頁面';
 
+  // 紀錄各分類的收縮狀態
+  let collapsedCategories = {};
+
   let state = {
     currentMonth: '2026-07',
     checklistData: {}, 
-    events: {},
+    events: {}, // 架構變更為儲存物件：{ "日": [ { text: "開會", color: "#e3f2fd", fontColor: "#1e88e5" } ] }
     importantItems: {},
     memoItems: {},
     sharedItems: {},
@@ -558,13 +574,24 @@
         if (!state.checklistData) state.checklistData = { '2026-07': { '主頁面': [] } };
         if (!state.memoItems) state.memoItems = {};
 
-        // 確保細項、注意事項、備註欄位完全對齊
         for (let m in state.checklistData) {
           for (let t in state.checklistData[m]) {
             state.checklistData[m][t].forEach(item => {
               if (item.detail === undefined) item.detail = "";
               if (item.notice === undefined) item.notice = "";
               if (item.note === undefined) item.note = "";
+            });
+          }
+        }
+
+        // 行事曆舊格式升級相容
+        for (let m in state.events) {
+          for (let d in state.events[m]) {
+            state.events[m][d] = state.events[m][d].map(evt => {
+              if (typeof evt === 'string') {
+                return { text: evt, color: '#e3f2fd', fontColor: '#1e88e5' };
+              }
+              return evt;
             });
           }
         }
@@ -614,19 +641,29 @@
       if (!state.checklistData) state.checklistData = {};
       if (!state.importantItems) state.importantItems = {};
       if (!state.memoItems) state.memoItems = {};
+      if (!state.events) state.events = {};
       if (!state.currentMonth) state.currentMonth = '2026-07';
     } else {
       const initKey = '2026-07';
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '確認規格需求', note: '' }] } };
     }
 
-    // 巡檢補完所有欄位 (detail, notice, note)
     for (let m in state.checklistData) {
       for (let t in state.checklistData[m]) {
         state.checklistData[m][t].forEach(item => {
           if (item.detail === undefined) item.detail = "";
           if (item.notice === undefined) item.notice = "";
           if (item.note === undefined) item.note = "";
+        });
+      }
+    }
+
+    // 格式轉換確保
+    for (let m in state.events) {
+      for (let d in state.events[m]) {
+        state.events[m][d] = state.events[m][d].map(evt => {
+          if (typeof evt === 'string') return { text: evt, color: '#e3f2fd', fontColor: '#1e88e5' };
+          return evt;
         });
       }
     }
@@ -746,7 +783,12 @@
     }
   }
 
-  /* ================== 🏷️ 分類與工作清單 (四欄位高擴充性) ================== */
+  /* ================== 🏷️ Checklist 與分類收縮展開功能 ================== */
+  function toggleCategoryCollapse(catName) {
+    collapsedCategories[catName] = !collapsedCategories[catName];
+    renderChecklist();
+  }
+
   function renderCategoriesManager() {
     const container = document.getElementById('categories-manage-list'); container.innerHTML = '';
     const select = document.getElementById('new-item-category'); select.innerHTML = '';
@@ -788,10 +830,23 @@
     
     categories.forEach(cat => {
       const catItems = monthItems.filter(item => item.category === cat);
+      const isCollapsed = !!collapsedCategories[cat];
+      
       const catSection = document.createElement('div'); catSection.className = 'category-section';
-      catSection.innerHTML = `<div class="category-title">${cat} (${catItems.length})</div>`;
+      
+      // 分類標題欄增加展開/收縮符號
+      catSection.innerHTML = `
+        <div class="category-title" onclick="toggleCategoryCollapse('${cat}')">
+          <span>${isCollapsed ? '▶' : '▼'} ${cat} (${catItems.length})</span>
+          <small style="font-weight:normal; font-size:12px; color:#666;">(點選可${isCollapsed ? '展開' : '收合'})</small>
+        </div>
+      `;
+      
+      const itemsBox = document.createElement('div');
+      itemsBox.className = `category-items-box ${isCollapsed ? 'collapsed' : ''}`;
+
       if (catItems.length === 0) {
-        catSection.innerHTML += `<p style="color: #999; font-style: italic; font-size: 13px; margin-left: 12px;">暫無項目。</p>`;
+        itemsBox.innerHTML = `<p style="color: #999; font-style: italic; font-size: 13px; margin-left: 12px;">暫無項目。</p>`;
       } else {
         catItems.forEach(item => {
           const realIndex = monthItems.indexOf(item);
@@ -804,9 +859,10 @@
             <input type="text" class="note-input" placeholder="📝 備註..." value="${item.note || ''}" onchange="updateItemNote(${realIndex}, this.value)">
             <button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="deleteChecklistItem(${realIndex})">刪除</button>
           `;
-          catSection.appendChild(div);
+          itemsBox.appendChild(div);
         });
       }
+      catSection.appendChild(itemsBox);
       container.appendChild(catSection);
     });
   }
@@ -819,14 +875,7 @@
   
   function addChecklistItem(e) {
     e.preventDefault();
-    state.checklistData[state.currentMonth][currentSubTab].push({ 
-      text: document.getElementById('new-item-input').value.trim(), 
-      category: document.getElementById('new-item-category').value, 
-      completed: false, 
-      detail: '',
-      notice: '', 
-      note: ''    
-    });
+    state.checklistData[state.currentMonth][currentSubTab].push({ text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, detail: '', notice: '', note: '' });
     document.getElementById('new-item-input').value = ''; renderChecklist(); saveToLocalStorage();
   }
 
@@ -934,17 +983,34 @@
   function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
   function getFirstDayOfWeek(year, month) { return new Date(year, month - 1, 1).getDay(); }
   
-  function editDayEvent(day) {
-    if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
-    const dayEvents = state.events[state.currentMonth][day] || [];
-    const newText = prompt(`請編輯 ${day} 號行程 (以英文逗號隔開)：`, dayEvents.join(', '));
+  /* ================== 📅 行事曆高階渲染、客製化顏色與雙擊修改核心邏輯 ================== */
+  function editDayEvent(day, idx) {
+    if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
+    const targetObj = state.events[state.currentMonth][day][idx];
+    
+    // 1. 修改內容文字
+    const newText = prompt(`請編輯第 ${idx+1} 項行程內容：`, targetObj.text);
     if (newText === null) return;
-    if (newText.trim() === '') delete state.events[state.currentMonth][day];
-    else state.events[state.currentMonth][day] = newText.split(',').map(s => s.trim());
+    
+    if (newText.trim() === '') {
+      state.events[state.currentMonth][day].splice(idx, 1);
+      if (state.events[state.currentMonth][day].length === 0) delete state.events[state.currentMonth][day];
+    } else {
+      targetObj.text = newText.trim();
+      
+      // 2. 客製化標籤顏色詢問
+      const newColor = prompt(`設定標籤底色 (可輸入 red, orange, green, #673ab7 等，不改請留空)：`, targetObj.color || '#e3f2fd');
+      if (newColor && newColor.trim() !== '') {
+        targetObj.color = newColor.trim();
+        // 如果設成比較深的顏色，文字改為白色防吃字
+        const darkColors = ['black', 'blue', 'purple', 'red', 'dark'];
+        const isDark = darkColors.some(c => newColor.toLowerCase().includes(c)) || newColor.startsWith('#2') || newColor.startsWith('#3');
+        targetObj.fontColor = isDark ? '#ffffff' : '#1e88e5';
+      }
+    }
     renderCalendar(); saveToLocalStorage();
   }
 
-  /* ================== 📅 行事曆渲染 ＋ 拖曳核心邏輯 ================== */
   let draggedItem = null;
   let sourceDay = null;
 
@@ -962,7 +1028,7 @@
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
     
     for (let day = 1; day <= totalDays; day++) {
-      const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.ondblclick = () => editDayEvent(day); dayDiv.dataset.day = day;
+      const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.dataset.day = day;
       dayDiv.ondragover = (e) => { e.preventDefault(); dayDiv.classList.add('drag-over'); };
       dayDiv.ondragleave = () => { dayDiv.classList.remove('drag-over'); };
       
@@ -971,10 +1037,10 @@
         if (draggedItem !== null && sourceDay !== null) {
           const targetDay = parseInt(dayDiv.dataset.day);
           if (sourceDay !== targetDay) {
-            state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1);
+            const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
             if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
             if (!state.events[state.currentMonth][targetDay]) state.events[state.currentMonth][targetDay] = [];
-            state.events[state.currentMonth][targetDay].push(draggedItem.text);
+            state.events[state.currentMonth][targetDay].push(movedObj);
             renderCalendar(); saveToLocalStorage();
           }
         }
@@ -982,12 +1048,44 @@
 
       dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
       const evts = state.events[state.currentMonth][day] || [];
-      evts.forEach((e, idx) => {
-        const tag = document.createElement('div'); tag.className = 'event-tag'; tag.draggable = true; tag.textContent = e;
-        tag.ondragstart = () => { draggedItem = { text: e, index: idx }; sourceDay = day; };
+      
+      evts.forEach((evtObj, idx) => {
+        const tag = document.createElement('div'); 
+        tag.className = 'event-tag'; 
+        tag.draggable = true;
+        
+        // 功能 1：每日的格子工作項目，全自動帶序號 (如 "1. 開會")
+        tag.textContent = `${idx + 1}. ${evtObj.text}`;
+        
+        // 功能 4：套用客製化色彩
+        tag.style.backgroundColor = evtObj.color || '#e3f2fd';
+        tag.style.color = evtObj.fontColor || '#1e88e5';
+        if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
+        else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
+
+        // 綁定雙擊單獨修改這筆事件
+        tag.ondblclick = (event) => {
+          event.stopPropagation(); // 防止點擊標籤時重複觸發格子的雙擊
+          editDayEvent(day, idx);
+        };
+        
+        tag.ondragstart = () => { draggedItem = { text: evtObj.text, index: idx }, sourceDay = day; };
         tag.ondragend = () => { draggedItem = null; sourceDay = null; };
         dayDiv.appendChild(tag);
       });
+      
+      // 如果格子本身被雙擊，則可以直接在尾端追加一筆全新行程
+      dayDiv.ondblclick = (event) => {
+        if (event.target === dayDiv || event.target.className === 'day-number') {
+          const quickText = prompt(`在此日期 (${day} 號) 快速追加一項工作日程：`);
+          if (quickText && quickText.trim() !== '') {
+            if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
+            state.events[state.currentMonth][day].push({ text: quickText.trim(), color: '#e3f2fd', fontColor: '#1e88e5' });
+            renderCalendar(); saveToLocalStorage();
+          }
+        }
+      };
+
       grid.appendChild(dayDiv);
     }
   }
@@ -995,34 +1093,67 @@
   function renderRecurringManager() {
     const tbody = document.getElementById('recurring-tbody'); tbody.innerHTML = '';
     recurringEventsTemplate.forEach((item, index) => {
-      let conditionText = item.workday ? `💼 第 ${item.workday} 個工作天` : `📅 ${item.day === 'last' ? '最後一天' : `${item.day} 號`}`;
+      let conditionText = item.workday ? `💼 工作天: ${item.workday}` : `📅 日期: ${item.day}`;
       tbody.innerHTML += `<tr><td><b>${conditionText}</b></td><td>${item.text}</td><td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="removeRecurringTemplate(${index})">刪除</button></td></tr>`;
     });
   }
   
   function addRecurringTemplate(e) {
     e.preventDefault();
-    let dayVal = document.getElementById('new-rec-day').value.trim().toLowerCase();
+    let dayVal = document.getElementById('new-rec-day').value.trim();
     let workdayVal = document.getElementById('new-rec-workday').value.trim();
     let textVal = document.getElementById('new-rec-text').value.trim();
-    if (!dayVal && !workdayVal) { alert('⚠️ 請填寫指定日期或是工作天數（二擇一）！'); return; }
-    if (dayVal && dayVal !== 'last' && isNaN(Number(dayVal))) { alert('⚠️ 固定日期請填寫數字或 last！'); return; }
-    recurringEventsTemplate.push({ day: workdayVal ? '' : dayVal, workday: workdayVal ? workdayVal : '', text: textVal });
+    if (!dayVal && !workdayVal) { alert('⚠️ 請填寫指定日期或是工作天數條件！'); return; }
+    
+    recurringEventsTemplate.push({ day: dayVal, workday: workdayVal, text: textVal });
     document.getElementById('new-rec-day').value = ''; document.getElementById('new-rec-workday').value = ''; document.getElementById('new-rec-text').value = '';
     renderRecurringManager(); saveToLocalStorage();
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
+  /* ================== ⚡ 功能 2 & 3：進階自動日程派發核心（多筆拆分、多重日期條件） ================== */
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
-    state.events[state.currentMonth] = {};
+    state.events[state.currentMonth] = {}; // 清空原本當月行程
+    
     recurringEventsTemplate.forEach(item => {
-      let td = item.workday ? getActualDayFromWorkday(year, month, item.workday) : (item.day === 'last' ? lastDay : Number(item.day));
-      if (!td || td > lastDay) return;
-      if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
-      state.events[state.currentMonth][td].push(item.text);
+      // 1. 拆解行程：支援用中文或英文逗號隔開的多個行程
+      const multiTexts = item.text.split(/[,，]/).map(t => t.trim()).filter(t => t !== '');
+      
+      // 2. 蒐集所有要帶入的日期
+      let targetDaysArray = [];
+      
+      if (item.workday) {
+        // 如果是工作天條件，支援逗號輸入多重天數 (如: 1,3,5)
+        const workdays = item.workday.split(/[,，]/).map(w => w.trim()).filter(w => w !== '');
+        workdays.forEach(w => {
+          let dNum = getActualDayFromWorkday(year, month, w);
+          if (dNum) targetDaysArray.push(dNum);
+        });
+      } else if (item.day) {
+        // 如果是日期條件，支援逗號輸入多個號碼 (如: 5,10,20,last)
+        const days = item.day.split(/[,，]/).map(d => d.trim().toLowerCase()).filter(d => d !== '');
+        days.forEach(d => {
+          let dNum = (d === 'last') ? lastDay : Number(d);
+          if (dNum && dNum <= lastDay) targetDaysArray.push(dNum);
+        });
+      }
+
+      // 3. 雙重迴圈，將所有日期與所有行程交叉配對派發，並且會在渲染時自動帶序號
+      targetDaysArray.forEach(td => {
+        if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
+        
+        multiTexts.forEach(txt => {
+          state.events[state.currentMonth][td].push({
+            text: txt,
+            color: '#e3f2fd', // 預設柔和藍
+            fontColor: '#1e88e5'
+          });
+        });
+      });
     });
-    renderCalendar(); saveToLocalStorage(); alert('⚡ 固定日程與工作天日程已一鍵安排完成！');
+    
+    renderCalendar(); saveToLocalStorage(); alert('⚡ 所有進階多重條件、多筆拆分日程已全自動派發並完成序號編排！');
   }
 
   window.onload = function() {
