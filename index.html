@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (批量管理與今日定位版)</title>
+  <title>工作儀表板 (同天拖曳與每週循環版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -91,37 +91,37 @@
     .table-text-input:hover { background-color: #fff; border-color: #ccc; }
     .table-text-input:focus { background-color: #fff; border-color: var(--primary-color); outline: none; }
 
+    /* 📅 功能 3：確保月曆等寬排版 (1fr 均分) */
     .calendar-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 20px; }
     @media (max-width: 992px) { .calendar-layout { grid-template-columns: 1fr; } }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-    .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 12px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 14.28%); gap: 4px; width: 100%; box-sizing: border-box; }
+    .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 6px 0; border-radius: 4px; font-size: 12px; width: 100%; box-sizing: border-box; }
     
-    /* 🏆 今天日期特殊黃金發光邊框 */
-    .calendar-day { min-height: 115px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; position: relative; }
+    .calendar-day { min-height: 120px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; position: relative; width: 100%; box-sizing: border-box; overflow: hidden; }
     .calendar-day.today-highlight { border: 2px solid #f1c40f !important; background-color: #fffdf0; box-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
     .calendar-day.drag-over { background-color: #e3f2fd; border: 2px dashed #1e88e5; }
     .calendar-day:hover { background-color: #f5f9ff; }
-    .calendar-day.empty { background-color: #fafafa; cursor: default; }
+    .calendar-day.empty { background-color: #fafafa; cursor: default; border: 1px solid transparent; }
     .day-number { font-weight: bold; font-size: 12px; margin-bottom: 5px; color: #666; }
     
-    /* 📍 🏆今天 智慧標籤樣式 */
-    .today-tag { position: absolute; top: 4px; right: 4px; background-color: #f1c40f; color: #2c3e50; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
+    .today-tag { position: absolute; top: 4px; right: 4px; background-color: #f1c40f; color: #2c3e50; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; z-index: 2; }
 
+    /* 每個日程項目卡片排版 */
     .event-tag {
-      font-size: 11px; padding: 3px 4px; border-radius: 3px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
-      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; padding: 4px 6px; border-radius: 3px; margin-bottom: 4px; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
     }
     .event-tag.completed { text-decoration: line-through !important; opacity: 0.45; }
+    .event-tag.inner-drag-over { border-top: 3px solid #ff9800 !important; } /* 同天拖曳排序定位輔助線 */
     
-    /* 同天排序微調小按鈕 */
-    .sort-arrows { display: inline-flex; gap: 2px; margin-left: auto; opacity: 0.3; }
-    .event-tag:hover .sort-arrows { opacity: 1; }
-    .sort-btn { cursor: pointer; font-size: 9px; padding: 0 1px; color: inherit; font-weight: bold; }
-    .sort-btn:hover { background: rgba(0,0,0,0.1); border-radius: 2px; }
+    /* 📋 行程內置備忘小提示字體 */
+    .event-tag-memo {
+      font-size: 9px; opacity: 0.75; font-weight: normal; margin-top: 1px; line-height: 1.1; word-break: break-all; white-space: normal;
+    }
 
     .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; }
     
-    /* 🗑️ 大量多選管理池專用樣式 */
+    /* 功能 4：歸位移至右欄最下方的批量資源籃 */
     .batch-box { background-color: #f4ecf7; border: 2px dashed #9b59b6; border-radius: 6px; padding: 12px; margin-top: 15px; }
     .batch-item { display: inline-flex; align-items: center; background: #fff; border: 1px solid #9b59b6; padding: 2px 8px; border-radius: 4px; font-size: 12px; gap: 6px; margin: 3px; }
 
@@ -154,7 +154,7 @@
 
   <div class="tabs">
     <button class="tab-btn active" id="btn-tab-checklist" onclick="switchTab('tab-checklist', this)">📝 工作項目 Checklist</button>
-    <button class="tab-btn" id="btn-tab-calendar" onclick="switchTab('tab-calendar', this)">📅 工作行事曆</button>
+    <button class="tab-btn" id="btn-tab-calendar" onclick="touchCalendarTab()">📅 工作行事曆</button>
   </div>
 
   <div class="control-bar">
@@ -234,7 +234,7 @@
       <div>
         <div class="card">
           <div class="card-title" style="border-bottom: none; margin-bottom: 0;">
-            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 點箭頭<b>上下調同天排序</b> / 拖曳至右下大量清除與搬移)</small></span>
+            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 <b>直接滑鼠拖曳項目上下排序與換天</b> / 雙擊改名加備註改色)</small></span>
             <button class="btn" onclick="applyRecurringEvents()">⚡ 一鍵安排當月固定日程</button>
           </div>
           <div class="calendar-header">
@@ -243,13 +243,16 @@
           <div class="calendar-grid" id="calendar-grid"></div>
         </div>
 
+        <!-- 功能 2：自訂範本，加入「每週固定天」循環欄位 -->
         <div class="card">
           <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目</span></div>
           <form class="inline-form" onsubmit="addRecurringTemplate(event)">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定日期：</label>
-            <input type="text" id="new-rec-day">
-            <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 工作天：</label>
-            <input type="text" id="new-rec-workday">
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定幾號：</label>
+            <input type="text" id="new-rec-day" style="width:70px;">
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 第幾個工作天：</label>
+            <input type="text" id="new-rec-workday" style="width:70px;">
+            <label style="align-self: center; font-weight: bold; font-size: 13px;">🔁 每週固定天：</label>
+            <input type="text" id="new-rec-week" placeholder="如: 一 或 五 或 1,5" style="width:110px;">
             <label style="align-self: center; font-weight: bold; font-size: 13px;">📝 日程內容：</label>
             <input type="text" id="new-rec-text" style="flex-grow: 1;" required>
             <button type="submit" class="btn btn-success">新增固定項目</button>
@@ -263,7 +266,7 @@
         </div>
       </div>
 
-      <!-- 右欄與大量多選暫存池 -->
+      <!-- 右欄 -->
       <div>
         <div class="card" style="border: 1px solid #f1c40f;">
           <div class="card-title" style="color: #f39c12;"><span>⭐ 本月重要事項</span></div>
@@ -289,17 +292,6 @@
           <div id="memo-items-container" style="min-height: 80px; max-height: 140px; overflow-y: auto;"></div>
         </div>
 
-        <!-- 功能 3：大量選取、多選刪除或拖移與移動資源池 -->
-        <div class="card batch-box" id="batch-drop-pool">
-          <div style="font-weight: bold; color: #8e44ad; font-size: 14px; margin-bottom: 8px;">📦 批量清除與大筆移動資源籃</div>
-          <div style="font-size: 11px; color:#666; margin-bottom: 10px;">(💡 直接把月曆上的任何行程「用滑鼠拖進來這裡」放開即可暫存大量管理)</div>
-          <div id="batch-items-list" style="min-height: 40px; max-height: 140px; overflow-y: auto; background: #fff; border: 1px dashed #ccc; padding: 6px; border-radius: 4px;"></div>
-          <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px; flex: 1;" onclick="clearBatchPool(true)">🔥 批量全刪除</button>
-            <button class="btn btn-success" style="padding: 4px 10px; font-size: 12px; flex: 1;" onclick="moveBatchPoolToDay()">🚀 一併移到某天</button>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-title"><span>📌 共享與特殊事項</span></div>
           <form class="add-item-form" onsubmit="addSharedItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
@@ -313,7 +305,7 @@
         </div>
 
         <div class="card">
-          <div class="card-title"><span>❌ 錯誤事項 / 待檢討改善</span></div>
+          <div class="card-title" style="color: #e74c3c;"><span>❌ 錯誤事項 / 待檢討改善</span></div>
           <form class="add-item-form" onsubmit="addErrorItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
               <input type="date" id="new-error-date" required>
@@ -322,6 +314,17 @@
             <button type="submit" class="btn btn-danger" style="width: 100%;">新增錯誤記錄</button>
           </form>
           <div id="error-items-container" style="min-height: 80px; max-height: 120px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- 功能 4：歸位至最下方的多選/批量清除管理池 -->
+        <div class="card batch-box" id="batch-drop-pool">
+          <div style="font-weight: bold; color: #8e44ad; font-size: 14px; margin-bottom: 6px;">📦 批量清除與大筆移動資源籃</div>
+          <div style="font-size: 11px; color:#666; margin-bottom: 8px;">(💡 拖曳月曆上的任何行程丟進來放開，即可暫存批量處理)</div>
+          <div id="batch-items-list" style="min-height: 45px; max-height: 120px; overflow-y: auto; background: #fff; border: 1px dashed #ccc; padding: 6px; border-radius: 4px;"></div>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px; flex: 1;" onclick="clearBatchPool(true)">🔥 批量全刪除</button>
+            <button class="btn btn-success" style="padding: 4px 10px; font-size: 12px; flex: 1;" onclick="moveBatchPoolToDay()">🚀 一併移到某天</button>
+          </div>
         </div>
       </div>
     </div>
@@ -354,25 +357,24 @@
   let state = {
     currentMonth: '2026-07',
     checklistData: {}, 
-    events: {}, 
+    events: {}, // 物件格式：{ text: "", memo: "", color: "", fontColor: "", completed: false }
     importantItems: {},
     memoItems: {},
     sharedItems: {},
     errorItems: {}
   };
 
-  // 批量資源池暫存陣列
   let batchPoolArray = [];
 
   let recurringEventsTemplate = [
-    { day: '1', workday: '', text: '填寫上月工時表' },
-    { day: '', workday: '3', text: '每月第3個工作天固定會議' },
-    { day: '10', workday: '', text: '提交財務報銷申請' },
-    { day: '25', workday: '', text: '專案進度回報與下月規劃' },
-    { day: 'last', workday: '', text: '系統資料備份' }
+    { day: '1', workday: '', week: '', text: '填寫上月工時表' },
+    { day: '', workday: '3', week: '', text: '每月第3個工作天固定會議' },
+    { day: '10', workday: '', week: '', text: '提交財務報銷申請' },
+    { day: '25', workday: '', week: '', text: '專案進度回報與下月規劃' },
+    { day: 'last', workday: '', week: '', text: '系統資料備份' }
   ];
 
-  let headerData = { title: "工作儀表板 Ultimate Pro", desc: "精準控制版：選單最多開放至當年底，11月自動解鎖下一整年度，並完整保留歷史過往月份。" };
+  let headerData = { title: "工作儀表板 Ultimate Pro", desc: "精準控制版" };
 
   function exportBackupFile() {
     const backupData = { categories, state, subTabs, currentSubTab, recurringEventsTemplate, headerData };
@@ -388,6 +390,18 @@
         const decodedData = JSON.parse(e.target.result);
         categories = decodedData.categories || ['核心專案', '行政/例行', '跨部門協作'];
         subTabs = decodedData.subTabs || ['主頁面']; currentSubTab = decodedData.currentSubTab || '主頁面'; state = decodedData.state;
+        
+        // 確保結構修復
+        for (let m in state.events) {
+          for (let d in state.events[m]) {
+            state.events[m][d].forEach(evt => {
+              if (evt.memo === undefined) evt.memo = "";
+            });
+          }
+        }
+        recurringEventsTemplate = decodedData.recurringEventsTemplate || [];
+        recurringEventsTemplate.forEach(t => { if(t.week === undefined) t.week = ""; });
+
         globalSwitchMonth(); alert("🎉 備份資料已 100% 成功匯入還原！");
       } catch (err) { alert("❌ 匯入失敗！"); }
     };
@@ -421,7 +435,18 @@
       const initKey = '2026-07';
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
     }
-    if (cachedRecurring) recurringEventsTemplate = JSON.parse(cachedRecurring);
+
+    // 確保內建備忘功能安全初始化
+    for (let m in state.events) {
+      for (let d in state.events[m]) {
+        state.events[m][d].forEach(evt => { if (evt.memo === undefined) evt.memo = ""; });
+      }
+    }
+
+    if (cachedRecurring) {
+      recurringEventsTemplate = JSON.parse(cachedRecurring);
+      recurringEventsTemplate.forEach(t => { if(t.week === undefined) t.week = ""; });
+    }
   }
 
   function updateThemeColors() {
@@ -431,11 +456,9 @@
   function applyThemeStyles(primary, bg) { document.getElementById('custom-theme-styles').innerHTML = `:root { --primary-color: ${primary}; --bg-color: ${bg}; }`; }
   function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
-  // 功能 2：儀表板月份起點從 2026 年 01 月開始，以前的歷史月份皆不需要存在
   function generateMonthOptions() {
     const select = document.getElementById('month-select'); select.innerHTML = '';
-    let startYear = 2026; let endYear = 2026;
-    if (REAL_CURRENT_MONTH >= 11) { endYear = 2027; }
+    let startYear = 2026; let endYear = 2026; if (REAL_CURRENT_MONTH >= 11) { endYear = 2027; }
     let dateCursor = new Date(startYear, 0, 1); const endDate = new Date(endYear, 11, 1);
     while (dateCursor <= endDate) {
       let y = dateCursor.getFullYear(); let m = dateCursor.getMonth() + 1;
@@ -464,6 +487,11 @@
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
+  }
+
+  function touchCalendarTab() {
+    switchTab('tab-calendar', document.getElementById('btn-tab-calendar'));
+    renderCalendar(); // 防止等寬比初始渲染未同步計算
   }
 
   function globalSwitchMonth() {
@@ -646,64 +674,51 @@
   }
   function deleteErrorItem(index) { state.errorItems[state.currentMonth].splice(index, 1); renderErrorItems(); saveToLocalStorage(); }
 
-  function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
-  function getFirstDayOfWeek(year, month) { return new Date(year, month - 1, 1).getDay(); }
-  
-  /* ================== 📅 行事曆、同天內上下排序與批量暫存池核心邏輯 ================== */
+  /* ================== 📅 行事曆、同天滑鼠拖曳與內建備註功能核心 ================== */
   function toggleEventCompleted(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
     renderCalendar(); saveToLocalStorage();
   }
 
-  // 功能 1：同一天之內上下微調行程順序排序
-  function sortDayEvent(day, idx, direction) {
-    if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
-    const arr = state.events[state.currentMonth][day];
-    if (direction === 'up' && idx > 0) {
-      const temp = arr[idx]; arr[idx] = arr[idx - 1]; arr[idx - 1] = temp;
-    } else if (direction === 'down' && idx < arr.length - 1) {
-      const temp = arr[idx]; arr[idx] = arr[idx + 1]; arr[idx + 1] = temp;
-    }
-    renderCalendar(); saveToLocalStorage();
-  }
-
   function editDayEvent(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     const targetObj = state.events[state.currentMonth][day][idx];
-    const newText = prompt("請編輯行程內容文字：", targetObj.text); if (newText === null) return;
     
+    const newText = prompt("請編輯行程主要內容文字：", targetObj.text); if (newText === null) return;
     if (newText.trim() === '') {
       state.events[state.currentMonth][day].splice(idx, 1);
       if (state.events[state.currentMonth][day].length === 0) delete state.events[state.currentMonth][day];
+      renderCalendar(); saveToLocalStorage(); return;
+    }
+    targetObj.text = newText.trim();
+    
+    // 功能 3：客製化追加、修改備註欄位功能
+    const newMemo = prompt("請為此行程添加或修改「備忘詳細註記」(不加請留空或刪除)：", targetObj.memo || "");
+    if (newMemo !== null) targetObj.memo = newMemo.trim();
+
+    const newColor = prompt("設定標籤底色 (若要移除顏色變回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
+    if (!newColor || newColor.trim() === '' || newColor.trim().toLowerCase() === 'x') {
+      targetObj.color = '#e3f2fd'; targetObj.fontColor = '#1e88e5';
     } else {
-      targetObj.text = newText.trim();
-      const newColor = prompt("設定標籤底色 (填色名。若要拿掉顏色回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
-      if (!newColor || newColor.trim() === '' || newColor.trim().toLowerCase() === 'x') {
-        targetObj.color = '#e3f2fd'; targetObj.fontColor = '#1e88e5';
-      } else {
-        targetObj.color = newColor.trim();
-        const darkColors = ['black', 'blue', 'purple', 'red', 'dark'];
-        const isDark = darkColors.some(c => newColor.toLowerCase().includes(c)) || newColor.startsWith('#2') || newColor.startsWith('#3');
-        targetObj.fontColor = isDark ? '#ffffff' : '#1e88e5';
-      }
+      targetObj.color = newColor.trim();
+      const darkColors = ['black', 'blue', 'purple', 'red', 'dark'];
+      const isDark = darkColors.some(c => newColor.toLowerCase().includes(c)) || newColor.startsWith('#2') || newColor.startsWith('#3');
+      targetObj.fontColor = isDark ? '#ffffff' : '#1e88e5';
     }
     renderCalendar(); saveToLocalStorage();
   }
 
-  // 設置拖曳資源籃大箱子事件
+  // 大量資源籃大箱子接收事件
   const poolBox = document.getElementById('batch-drop-pool');
   poolBox.ondragover = (e) => { e.preventDefault(); poolBox.style.backgroundColor = '#ebdef0'; };
   poolBox.ondragleave = () => { poolBox.style.backgroundColor = '#f4ecf7'; };
   poolBox.ondrop = (e) => {
     e.preventDefault(); poolBox.style.backgroundColor = '#f4ecf7';
     if (draggedItem !== null && sourceDay !== null) {
-      // 從原日期取出物件
       const extractedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
       if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
-      
-      // 功能 3：推入大量暫存控制陣列籃
-      batchPoolArray.push(extractedObj);
+      batchPoolArray.push(extractedObj); draggedItem = null; sourceDay = null;
       renderCalendar(); renderBatchPool(); saveToLocalStorage();
     }
   };
@@ -712,36 +727,25 @@
     const listDiv = document.getElementById('batch-items-list'); listDiv.innerHTML = '';
     if (batchPoolArray.length === 0) { listDiv.innerHTML = '<span style="color:#aaa; font-style:italic; font-size:12px;">籃子目前是空的。</span>'; return; }
     batchPoolArray.forEach((item, idx) => {
-      listDiv.innerHTML += `
-        <div class="batch-item" style="background:${item.color}; color:${item.fontColor};">
-          <span>${item.text}</span>
-          <span style="color:#e74c3c; font-weight:bold; cursor:pointer;" onclick="removeItemFromPool(${idx})">×</span>
-        </div>`;
+      listDiv.innerHTML += `<div class="batch-item" style="background:${item.color}; color:${item.fontColor};"><span>${item.text}</span><span style="color:#e74c3c; font-weight:bold; cursor:pointer;" onclick="removeItemFromPool(${idx})">×</span></div>`;
     });
   }
   function removeItemFromPool(idx) { batchPoolArray.splice(idx, 1); renderBatchPool(); }
-  
-  function clearBatchPool(confirmNeed) {
-    if (confirmNeed && batchPoolArray.length > 0) {
-      if (!confirm(`確定要將這 ${batchPoolArray.length} 項暫存項目通通大量刪除嗎？`)) return;
-    }
-    batchPoolArray = []; renderBatchPool();
-  }
+  function clearBatchPool(confirmNeed) { if (confirmNeed && batchPoolArray.length > 0) { if (!confirm(`確定要將這 ${batchPoolArray.length} 項暫存項目大量刪除嗎？`)) return; } batchPoolArray = []; renderBatchPool(); }
 
   function moveBatchPoolToDay() {
     if (batchPoolArray.length === 0) return;
-    const targetDayStr = prompt(`請輸入要把這 ${batchPoolArray.length} 項行程一併大量搬移到幾號？(例如輸入: 15)`);
-    if (!targetDayStr) return; const dayNum = parseInt(targetDayStr);
+    const targetDayStr = prompt(`搬移到幾號？(如輸入: 15)`); if (!targetDayStr) return; const dayNum = parseInt(targetDayStr);
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
-    if (isNaN(dayNum) || dayNum < 1 || dayNum > lastDay) { alert("⚠️ 輸入日期不正確！"); return; }
-
+    if (isNaN(dayNum) || dayNum < 1 || dayNum > lastDay) return;
     if (!state.events[state.currentMonth][dayNum]) state.events[state.currentMonth][dayNum] = [];
     batchPoolArray.forEach(item => { state.events[state.currentMonth][dayNum].push(item); });
-    
-    clearBatchPool(false); renderCalendar(); saveToLocalStorage(); alert(`🚀 成功將項目大量整批挪動至 ${dayNum} 號！`);
+    clearBatchPool(false); renderCalendar(); saveToLocalStorage();
   }
 
+  /* ================== 滑鼠同天內、跨天混合托曳排序機制核心 ================== */
   let draggedItem = null; let sourceDay = null;
+  let targetOrderIndex = null; // 儲存同天內插入的索引定位
 
   function renderCalendar() {
     const [year, month] = state.currentMonth.split('-').map(Number);
@@ -756,33 +760,38 @@
     
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
     const monthKey = `${year}-${month.toString().padStart(2, '0')}`; const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
-
-    // 功能 4：根據當下裝置的真實時間，在「今天」的日期格子畫上特殊發光標籤
-    const systemDate = new Date();
-    const isCurrentDashboardYearMonth = (systemDate.getFullYear() === year && (systemDate.getMonth() + 1) === month);
+    const systemDate = new Date(); const isCurrentDashboardYearMonth = (systemDate.getFullYear() === year && (systemDate.getMonth() + 1) === month);
 
     for (let day = 1; day <= totalDays; day++) {
       const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.dataset.day = day;
-      
-      // 比對確認是否為「🏆今天」的格子
-      if (isCurrentDashboardYearMonth && systemDate.getDate() === day) {
-        dayDiv.classList.add('today-highlight');
-        dayDiv.innerHTML = `<div class="today-tag">🏆 今天</div>`;
-      }
+      if (isCurrentDashboardYearMonth && systemDate.getDate() === day) { dayDiv.classList.add('today-highlight'); dayDiv.innerHTML = `<div class="today-tag">🏆 今天</div>`; }
 
-      dayDiv.ondragover = (e) => { e.preventDefault(); dayDiv.classList.add('drag-over'); };
-      dayDiv.ondragleave = () => { dayDiv.classList.remove('drag-over'); };
+      // 1. 日期格子整格作為放下的容器監聽
+      dayDiv.ondragover = (e) => { e.preventDefault(); if (e.target === dayDiv || e.target.className === 'day-number') { dayDiv.classList.add('drag-over'); } };
+      dayDiv.ondragleave = (e) => { dayDiv.classList.remove('drag-over'); };
+      
       dayDiv.ondrop = (e) => {
         e.preventDefault(); dayDiv.classList.remove('drag-over');
         if (draggedItem !== null && sourceDay !== null) {
           const targetDay = parseInt(dayDiv.dataset.day);
-          if (sourceDay !== targetDay) {
+          
+          // 如果是同天內部托曳，且沒有點到特定行程卡片的間隙，則丟到陣列最尾端
+          if (targetOrderIndex === null) {
             const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
             if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
             if (!state.events[state.currentMonth][targetDay]) state.events[state.currentMonth][targetDay] = [];
             state.events[state.currentMonth][targetDay].push(movedObj);
-            renderCalendar(); saveToLocalStorage();
+          } else {
+            // 如果是在特定行程卡片的位置放下 (不論同天還是跨天)
+            const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
+            if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
+            if (!state.events[state.currentMonth][targetDay]) state.events[state.currentMonth][targetDay] = [];
+            
+            // 完美插入至目標指派之順序位置中
+            state.events[state.currentMonth][targetDay].splice(targetOrderIndex, 0, movedObj);
           }
+          draggedItem = null; sourceDay = null; targetOrderIndex = null;
+          renderCalendar(); saveToLocalStorage();
         }
       };
 
@@ -793,22 +802,23 @@
       evts.forEach((evtObj, idx) => {
         const tag = document.createElement('div'); tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; tag.draggable = true;
         
-        // 渲染文字序號與功能 1 的同天內上下排序小按鈕
-        tag.innerHTML = `
-          <span>${idx + 1}. ${evtObj.text}</span>
-          <div class="sort-arrows">
-            <span class="sort-btn" onclick="event.stopPropagation(); sortDayEvent(${day}, ${idx}, 'up')">▲</span>
-            <span class="sort-btn" onclick="event.stopPropagation(); sortDayEvent(${day}, ${idx}, 'down')">▼</span>
-          </div>`;
+        // 核心文字與備註的渲染
+        let memoHtml = evtObj.memo ? `<div class="event-tag-memo">📎 ${evtObj.memo}</div>` : '';
+        tag.innerHTML = `<span>${idx + 1}. ${evtObj.text}</span>${memoHtml}`;
         
         tag.style.backgroundColor = evtObj.color || '#e3f2fd'; tag.style.color = evtObj.fontColor || '#1e88e5';
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
 
+        // 綁定行程本身的拖曳、滑動監聽 (實現同天、跨天內任意插隊)
+        tag.ondragstart = (event) => { draggedItem = { text: evtObj.text, index: idx }, sourceDay = day; event.stopPropagation(); };
+        tag.ondragover = (event) => { event.preventDefault(); event.stopPropagation(); tag.classList.add('inner-drag-over'); targetOrderIndex = idx; };
+        tag.ondragleave = (event) => { event.stopPropagation(); tag.classList.remove('inner-drag-over'); };
+        tag.ondragend = () => { draggedItem = null; sourceDay = null; targetOrderIndex = null; };
+
         tag.onclick = (event) => { event.stopPropagation(); toggleEventCompleted(day, idx); };
         tag.ondblclick = (event) => { event.stopPropagation(); editDayEvent(day, idx); };
-        tag.ondragstart = () => { draggedItem = { text: evtObj.text, index: idx }, sourceDay = day; };
-        tag.ondragend = () => { draggedItem = null; sourceDay = null; };
+        
         dayDiv.appendChild(tag);
       });
       
@@ -817,7 +827,7 @@
           const quickText = prompt(`在此日期 (${day} 號) 追加一項日程：`);
           if (quickText && quickText.trim() !== '') {
             if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
-            state.events[state.currentMonth][day].push({ text: quickText.trim(), color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
+            state.events[state.currentMonth][day].push({ text: quickText.trim(), memo: '', color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
             renderCalendar(); saveToLocalStorage();
           }
         }
@@ -826,22 +836,28 @@
     }
   }
 
-  /* ================== ⚙️ 範本配置區 ================== */
+  /* ================== ⚙️ 自訂帶入範本配置 (每週循環) ================== */
   function updateTemplateCondition(index, field, value) {
-    if (field === 'condition') {
-      if (recurringEventsTemplate[index].workday !== '') recurringEventsTemplate[index].workday = value.trim();
-      else recurringEventsTemplate[index].day = value.trim();
-    } else if (field === 'text') { recurringEventsTemplate[index].text = value.trim(); }
+    if (field === 'condition_day') recurringEventsTemplate[index].day = value.trim();
+    else if (field === 'condition_workday') recurringEventsTemplate[index].workday = value.trim();
+    // 功能 2：修改每週固定循環範本條件
+    else if (field === 'condition_week') recurringEventsTemplate[index].week = value.trim();
+    else if (field === 'text') recurringEventsTemplate[index].text = value.trim();
     saveToLocalStorage();
   }
 
   function renderRecurringManager() {
     const tbody = document.getElementById('recurring-tbody'); tbody.innerHTML = '';
     recurringEventsTemplate.forEach((item, index) => {
-      let isWorkday = item.workday !== ''; let conditionVal = isWorkday ? item.workday : item.day; let labelPrefix = isWorkday ? "💼 工作天: " : "📅 日期: ";
       tbody.innerHTML += `
         <tr>
-          <td><span style="font-size:12px; color:#666;">${labelPrefix}</span><input type="text" class="table-text-input" value="${conditionVal}" onchange="updateTemplateCondition(${index}, 'condition', this.value)" style="width:70px; font-weight:bold;"></td>
+          <td>
+            <div style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:#555;">
+              <div>📅 幾號: <input type="text" class="table-text-input" value="${item.day || ''}" onchange="updateTemplateCondition(${index}, 'condition_day', this.value)" style="width:45px; font-weight:bold;"></div>
+              <div>💼 工作天: <input type="text" class="table-text-input" value="${item.workday || ''}" onchange="updateTemplateCondition(${index}, 'condition_workday', this.value)" style="width:45px; font-weight:bold;"></div>
+              <div>🔁 每週: <input type="text" class="table-text-input" value="${item.week || ''}" onchange="updateTemplateCondition(${index}, 'condition_week', this.value)" style="width:45px; font-weight:bold;"></div>
+            </div>
+          </td>
           <td><input type="text" class="table-text-input" value="${item.text}" onchange="updateTemplateCondition(${index}, 'text', this.value)"></td>
           <td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="removeRecurringTemplate(${index})">刪除</button></td>
         </tr>`;
@@ -849,36 +865,60 @@
   }
   
   function addRecurringTemplate(e) {
-    e.preventDefault(); let dayVal = document.getElementById('new-rec-day').value.trim(); let workdayVal = document.getElementById('new-rec-workday').value.trim(); let textVal = document.getElementById('new-rec-text').value.trim();
-    recurringEventsTemplate.push({ day: dayVal, workday: workdayVal, text: textVal });
-    document.getElementById('new-rec-day').value = ''; document.getElementById('new-rec-workday').value = ''; document.getElementById('new-rec-text').value = '';
+    e.preventDefault(); 
+    let dayVal = document.getElementById('new-rec-day').value.trim(); 
+    let workdayVal = document.getElementById('new-rec-workday').value.trim(); 
+    let weekVal = document.getElementById('new-rec-week').value.trim(); 
+    let textVal = document.getElementById('new-rec-text').value.trim();
+    
+    recurringEventsTemplate.push({ day: dayVal, workday: workdayVal, week: weekVal, text: textVal });
+    document.getElementById('new-rec-day').value = ''; document.getElementById('new-rec-workday').value = ''; document.getElementById('new-rec-week').value = ''; document.getElementById('new-rec-text').value = '';
     renderRecurringManager(); saveToLocalStorage();
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
+  // 功能 2：一鍵排入固定日程核心演算擴充 (精準解析每週循環日期)
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
     
+    const weekMapping = { "日": 0, "一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6, "0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6 };
+
     recurringEventsTemplate.forEach(item => {
       const multiTexts = item.text.split(/[,，]/).map(t => t.trim()).filter(t => t !== '');
       let targetDaysArray = [];
+      
       if (item.workday) {
         const workdays = item.workday.split(/[,，]/).map(w => w.trim()).filter(w => w !== '');
         workdays.forEach(w => { let dNum = getActualDayFromWorkday(year, month, w); if (dNum) targetDaysArray.push(dNum); });
-      } else if (item.day) {
+      } 
+      if (item.day) {
         const days = item.day.split(/[,，]/).map(d => d.trim().toLowerCase()).filter(d => d !== '');
         days.forEach(d => { let dNum = (d === 'last') ? lastDay : Number(d); if (dNum && dNum <= lastDay) targetDaysArray.push(dNum); });
       }
+      // 演算每週循環：比對當月哪些天符合星期設定
+      if (item.week) {
+        const targetWeeks = item.week.split(/[,，]/).map(w => w.trim());
+        let allowedWeekdays = [];
+        targetWeeks.forEach(w => { if (weekMapping[w] !== undefined) allowedWeekdays.push(weekMapping[w]); });
+        
+        for (let d = 1; d <= lastDay; d++) {
+          let currentDayOfWeek = new Date(year, month - 1, d).getDay();
+          if (allowedWeekdays.includes(currentDayOfWeek)) {
+            if (!targetDaysArray.includes(d)) targetDaysArray.push(d);
+          }
+        }
+      }
+
       targetDaysArray.forEach(td => {
         if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
         multiTexts.forEach(txt => {
           let isExist = state.events[state.currentMonth][td].some(e => e.text === txt);
-          if (!isExist) state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
+          if (!isExist) state.events[state.currentMonth][td].push({ text: txt, memo: '', color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
         });
       });
     });
-    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加！');
+    renderCalendar(); saveToLocalStorage(); alert('⚡ 所有指定日期、工作天、及每週固定循環日程已全自動派發追加完成！');
   }
 
   window.onload = function() {
