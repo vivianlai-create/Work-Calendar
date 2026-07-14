@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (新增備忘錄打勾版)</title>
+  <title>工作儀表板 (完美四大欄位版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -21,7 +21,7 @@
       transition: background-color 0.3s;
     }
     .container {
-      max-width: 1300px;
+      max-width: 1350px;
       margin: 0 auto;
     }
     header {
@@ -193,7 +193,7 @@
     .checklist-item {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 8px;
       padding: 8px 12px;
       border-radius: 4px;
@@ -206,23 +206,25 @@
       cursor: pointer;
     }
     .checklist-item .item-text {
-      flex: 2;
-      min-width: 150px;
+      flex: 1.8;
+      min-width: 140px;
     }
     .checklist-item.completed .item-text {
       text-decoration: line-through;
       color: #888;
     }
     
+    /* 細項、注意事項、備註輸入框統一樣式 */
+    .checklist-item .detail-input,
     .checklist-item .notice-input,
     .checklist-item .note-input {
-      flex: 2;
+      flex: 1.5;
       padding: 4px 8px;
       font-size: 13px;
       border: 1px solid #ddd;
       border-radius: 4px;
       background-color: #fff;
-      min-width: 150px;
+      min-width: 120px;
     }
 
     .btn {
@@ -451,7 +453,7 @@
           <div id="important-items-container" style="min-height: 80px; max-height: 180px; overflow-y: auto;"></div>
         </div>
 
-        <!-- 📝 全新：備忘錄區塊 (位於重要事項下方，可打勾) -->
+        <!-- 📝 備忘錄 -->
         <div class="card" style="border: 1px solid #34495e;">
           <div class="card-title" style="color: #34495e;"><span>📝 備忘錄</span></div>
           <form class="add-item-form" onsubmit="addMemoItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
@@ -509,7 +511,7 @@
     checklistData: {}, 
     events: {},
     importantItems: {},
-    memoItems: {}, // 新增：存放備忘錄資料
+    memoItems: {},
     sharedItems: {},
     errorItems: {}
   };
@@ -554,12 +556,13 @@
         state = decodedData.state;
         
         if (!state.checklistData) state.checklistData = { '2026-07': { '主頁面': [] } };
-        if (!state.memoItems) state.memoItems = {}; // 還原時防錯
+        if (!state.memoItems) state.memoItems = {};
 
+        // 確保細項、注意事項、備註欄位完全對齊
         for (let m in state.checklistData) {
           for (let t in state.checklistData[m]) {
             state.checklistData[m][t].forEach(item => {
-              if (item.note && item.notice === undefined) { item.notice = item.note; item.note = ""; }
+              if (item.detail === undefined) item.detail = "";
               if (item.notice === undefined) item.notice = "";
               if (item.note === undefined) item.note = "";
             });
@@ -614,11 +617,18 @@
       if (!state.currentMonth) state.currentMonth = '2026-07';
     } else {
       const initKey = '2026-07';
-      state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, notice: '確認規格需求', note: '' }] } };
+      state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '確認規格需求', note: '' }] } };
     }
-    
-    if (state.checklist && Object.keys(state.checklistData).length === 0) {
-      for (let m in state.checklist) { state.checklistData[m] = { '主頁面': state.checklist[m] }; }
+
+    // 巡檢補完所有欄位 (detail, notice, note)
+    for (let m in state.checklistData) {
+      for (let t in state.checklistData[m]) {
+        state.checklistData[m][t].forEach(item => {
+          if (item.detail === undefined) item.detail = "";
+          if (item.notice === undefined) item.notice = "";
+          if (item.note === undefined) item.note = "";
+        });
+      }
     }
 
     if (cachedRecurring) recurringEventsTemplate = JSON.parse(cachedRecurring);
@@ -736,7 +746,7 @@
     }
   }
 
-  /* ================== 🏷️ 分類與工作清單 ================== */
+  /* ================== 🏷️ 分類與工作清單 (四欄位高擴充性) ================== */
   function renderCategoriesManager() {
     const container = document.getElementById('categories-manage-list'); container.innerHTML = '';
     const select = document.getElementById('new-item-category'); select.innerHTML = '';
@@ -789,6 +799,7 @@
           div.innerHTML = `
             <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleChecklistItem(${realIndex})">
             <span class="item-text">${item.text}</span>
+            <input type="text" class="detail-input" placeholder="📋 細項格子..." value="${item.detail || ''}" onchange="updateItemDetail(${realIndex}, this.value)">
             <input type="text" class="notice-input" placeholder="⚠️ 注意事項..." value="${item.notice || ''}" onchange="updateItemNotice(${realIndex}, this.value)">
             <input type="text" class="note-input" placeholder="📝 備註..." value="${item.note || ''}" onchange="updateItemNote(${realIndex}, this.value)">
             <button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="deleteChecklistItem(${realIndex})">刪除</button>
@@ -801,13 +812,21 @@
   }
 
   function toggleChecklistItem(index) { state.checklistData[state.currentMonth][currentSubTab][index].completed = !state.checklistData[state.currentMonth][currentSubTab][index].completed; renderChecklist(); saveToLocalStorage(); }
+  function updateItemDetail(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].detail = value; saveToLocalStorage(); }
   function updateItemNotice(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].notice = value; saveToLocalStorage(); }
   function updateItemNote(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].note = value; saveToLocalStorage(); }
   function deleteChecklistItem(index) { if(confirm('確定要刪除嗎？')) { state.checklistData[state.currentMonth][currentSubTab].splice(index, 1); renderChecklist(); saveToLocalStorage(); } }
   
   function addChecklistItem(e) {
     e.preventDefault();
-    state.checklistData[state.currentMonth][currentSubTab].push({ text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, notice: '', note: '' });
+    state.checklistData[state.currentMonth][currentSubTab].push({ 
+      text: document.getElementById('new-item-input').value.trim(), 
+      category: document.getElementById('new-item-category').value, 
+      completed: false, 
+      detail: '',
+      notice: '', 
+      note: ''    
+    });
     document.getElementById('new-item-input').value = ''; renderChecklist(); saveToLocalStorage();
   }
 
@@ -817,12 +836,12 @@
     if (!state.checklistData[lastKey] || !state.checklistData[lastKey][currentSubTab]) { alert('找不到上個月份該頁籤下的資料！'); return; }
     const lastItems = state.checklistData[lastKey][currentSubTab] || []; if (lastItems.length === 0) { alert('找不到上個月份的資料！'); return; }
     if (confirm(`確定要複製上月 ${lastItems.length} 個項目到本月的【${currentSubTab}】分頁嗎？`)) {
-      lastItems.forEach(item => { state.checklistData[state.currentMonth][currentSubTab].push({ text: item.text, category: categories.includes(item.category) ? item.category : categories[0], completed: false, notice: item.notice || '', note: item.note || '' }); });
+      lastItems.forEach(item => { state.checklistData[state.currentMonth][currentSubTab].push({ text: item.text, category: categories.includes(item.category) ? item.category : categories[0], completed: false, detail: item.detail || '', notice: item.notice || '', note: item.note || '' }); });
       renderChecklist(); saveToLocalStorage();
     }
   }
 
-  /* ================== ⭐ 右側資訊欄 (重要事項與備忘錄) ================== */
+  /* ================== ⭐ 右側資訊欄 ================== */
   function renderImportantItems() {
     const container = document.getElementById('important-items-container'); container.innerHTML = '';
     if (!state.importantItems[state.currentMonth]) state.importantItems[state.currentMonth] = [];
@@ -850,7 +869,6 @@
   function toggleImportantItem(index) { state.importantItems[state.currentMonth][index].completed = !state.importantItems[state.currentMonth][index].completed; renderImportantItems(); saveToLocalStorage(); }
   function deleteImportantItem(index) { state.importantItems[state.currentMonth].splice(index, 1); renderImportantItems(); saveToLocalStorage(); }
 
-  // 📝 備忘錄核心邏輯
   function renderMemoItems() {
     const container = document.getElementById('memo-items-container'); container.innerHTML = '';
     if (!state.memoItems[state.currentMonth]) state.memoItems[state.currentMonth] = [];
@@ -926,7 +944,7 @@
     renderCalendar(); saveToLocalStorage();
   }
 
-  /* ================== 📅 行事曆 ＋ 拖曳核心邏輯 ================== */
+  /* ================== 📅 行事曆渲染 ＋ 拖曳核心邏輯 ================== */
   let draggedItem = null;
   let sourceDay = null;
 
