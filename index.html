@@ -143,7 +143,6 @@
 
     .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; overflow: hidden; text-overflow: ellipsis; }
     
-    /* 🏆 修正：將「批量清除與大筆移動資源籃」改為固定懸浮在螢幕右下角，大幅降低拖移難度 */
     .batch-box { 
       position: fixed;
       bottom: 20px;
@@ -158,7 +157,6 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.15);
       transition: transform 0.2s, background-color 0.2s;
     }
-    /* 當被拖曳物體移入懸浮箱子時，發光放大提示 */
     .batch-box.drag-over-active {
       transform: scale(1.03);
       background-color: #ebdef0;
@@ -301,7 +299,6 @@
                 <label style="font-weight: bold; font-size: 13px; margin-bottom: 4px;">🔁 每周固定：</label>
                 <input type="text" id="new-rec-week" placeholder="1-7 (1是周一)">
               </div>
-              <!-- 🏆 修正：一鍵帶入新增「每日」選項勾選框 -->
               <div style="display: flex; flex-direction: column; width: 90px; justify-content: center; align-items: center;">
                 <label style="font-weight: bold; font-size: 13px; margin-bottom: 8px;">🔁 每日固定：</label>
                 <input type="checkbox" id="new-rec-daily" style="transform: scale(1.3); cursor: pointer;">
@@ -372,7 +369,7 @@
           <div id="achievement-items-container" style="min-height: 80px; max-height: 120px; overflow-y: auto;"></div>
         </div>
 
-        <div class="card" style="margin-bottom: 100px;"> <!-- 增加底部外距，防懸浮箱子遮擋內容 -->
+        <div class="card" style="margin-bottom: 100px;">
           <div class="card-title"><span>❌ 錯誤事項 / 待檢討改善</span></div>
           <form class="add-item-form" onsubmit="addErrorItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
@@ -384,7 +381,7 @@
           <div id="error-items-container" style="min-height: 80px; max-height: 120px; overflow-y: auto;"></div>
         </div>
 
-        <!-- 🏆 修正：右下角「固定懸浮」的大量移動與刪除資源籃 -->
+        <!-- 批量清除與大筆移動資源籃 (懸浮視窗) -->
         <div class="card batch-box" id="batch-drop-pool">
           <div style="font-weight: bold; color: #8e44ad; font-size: 13px; margin-bottom: 6px;">📦 批量清除與大筆移動資源籃</div>
           <div style="font-size: 10px; color:#666; margin-bottom: 8px;">(💡 行程直接「拖曳到這裡」放開即可暫存)</div>
@@ -798,10 +795,8 @@
     renderCalendar(); saveToLocalStorage();
   }
 
-  // 設置拖曳資源籃大箱子事件
   const poolBox = document.getElementById('batch-drop-pool');
   
-  // 🏆 修正：加入拖入、移出時的樣式變化輔助
   poolBox.ondragover = (e) => { 
     e.preventDefault(); 
     poolBox.classList.add('drag-over-active'); 
@@ -993,7 +988,6 @@
     saveToLocalStorage();
   }
 
-  // 🏆 修正：自訂範本管理列表渲染（增加每日自動判斷與核取方塊）
   function renderRecurringManager() {
     const tbody = document.getElementById('recurring-tbody'); tbody.innerHTML = '';
     recurringEventsTemplate.forEach((item, index) => {
@@ -1039,7 +1033,6 @@
     let dailyVal = document.getElementById('new-rec-daily').checked;
     let textVal = document.getElementById('new-rec-text').value.trim();
     
-    // 🏆 修正：帶入每日屬性
     recurringEventsTemplate.push({ day: dayVal, workday: workdayVal, week: weekVal, daily: dailyVal, text: textVal });
     
     document.getElementById('new-rec-day').value = ''; 
@@ -1051,23 +1044,55 @@
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
+  // 🏆 核心演算法：一鍵自動帶入，並實現遇到週末/國定假日「自動提前至最近工作日」
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
     
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+    const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
+
+    // 💡 判斷「某日期是否為放假日（週末或國定假日）」
+    function isHoliday(dayNum) {
+      const dateObj = new Date(year, month - 1, dayNum);
+      const dayOfWeek = dateObj.getDay();
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // 0是週日，6是週六
+      const isNationalHoliday = !!holidayConfig[dayNum];
+      return (isWeekend || isNationalHoliday);
+    }
+
+    // 💡 尋找「最近的、在當日之前的可工作日」（若退無可退，回傳 null）
+    function getClosestWorkday(targetDay) {
+      let cursor = targetDay;
+      while (cursor >= 1) {
+        if (!isHoliday(cursor)) {
+          return cursor;
+        }
+        cursor--;
+      }
+      return null; // 若當月 1 號前全都是放假日，則放棄帶入該天
+    }
+
     recurringEventsTemplate.forEach(item => {
       const multiTexts = item.text.split(/[,，]/).map(t => t.trim()).filter(t => t !== '');
-      let targetDaysArray = [];
+      let rawDaysArray = []; // 原本預計要排入的日期
       
       if (item.daily) {
-        // 🏆 修正：若是「每日」，直接帶入當月 1 號到最後一天的所有日期
+        // 🔁 每日固定：因為六日不排，直接只拿「非假日」的那些天即可
         for (let d = 1; d <= lastDay; d++) {
-          targetDaysArray.push(d);
+          if (!isHoliday(d)) {
+            rawDaysArray.push(d);
+          }
         }
       } else if (item.workday) {
+        // 💼 依第幾個工作天帶入：此方法算出來的本身就是工作天，故不需要重新調整
         const workdays = item.workday.split(/[,，]/).map(w => w.trim()).filter(w => w !== '');
-        workdays.forEach(w => { let dNum = getActualDayFromWorkday(year, month, w); if (dNum) targetDaysArray.push(dNum); });
+        workdays.forEach(w => { 
+          let dNum = getActualDayFromWorkday(year, month, w); 
+          if (dNum) rawDaysArray.push(dNum); 
+        });
       } else if (item.week) {
+        // 🔁 每周固定星期幾：若排程日（例：固定週六）遇到放假日，執行「向前提前至最近工作天」
         const targetWeeks = item.week.split(/[,，]/).map(wk => {
           let num = Number(wk.trim());
           return num === 7 ? 0 : num; 
@@ -1076,15 +1101,27 @@
         for (let d = 1; d <= lastDay; d++) {
           let dayOfWeek = new Date(year, month - 1, d).getDay();
           if (targetWeeks.includes(dayOfWeek)) {
-            targetDaysArray.push(d);
+            // ⚠️ 週末星期的固定事件也一樣走提前篩選邏輯
+            const actualWorkday = getClosestWorkday(d);
+            if (actualWorkday) rawDaysArray.push(actualWorkday);
           }
         }
       } else if (item.day) {
+        // 📅 指定日期：遇到放假向前提前
         const days = item.day.split(/[,，]/).map(d => d.trim().toLowerCase()).filter(d => d !== '');
-        days.forEach(d => { let dNum = (d === 'last') ? lastDay : Number(d); if (dNum && dNum <= lastDay) targetDaysArray.push(dNum); });
+        days.forEach(d => { 
+          let dNum = (d === 'last') ? lastDay : Number(d); 
+          if (dNum && dNum <= lastDay) {
+            const actualWorkday = getClosestWorkday(dNum);
+            if (actualWorkday) rawDaysArray.push(actualWorkday);
+          } 
+        });
       }
       
-      targetDaysArray.forEach(td => {
+      // 去除重複推算出來的日期（若有重複提前到同一天，取聯集即可）
+      const finalDaysArray = [...new Set(rawDaysArray)];
+
+      finalDaysArray.forEach(td => {
         if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
         multiTexts.forEach(txt => {
           let isExist = state.events[state.currentMonth][td].some(e => e.text === txt);
@@ -1092,7 +1129,8 @@
         });
       });
     });
-    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加！');
+
+    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加！(已自動過濾週末放假日，遇假期項目已順延提前至最近工作天)');
   }
 
   window.onload = function() {
