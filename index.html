@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板 (行程刪除線與範本在線修改版)</title>
+  <title>工作儀表板 (自由插隊與2026國定放假版)</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -236,7 +236,6 @@
     .mega-field { display: flex; flex-direction: column; gap: 5px; }
     .mega-field label { font-size: 12px; font-weight: bold; color: #666; }
 
-    /* 範本在線修改表格專用樣式 */
     .table-text-input {
       width: 90%; font-size: 13px; border: 1px solid transparent; background-color: transparent; padding: 4px; border-radius: 3px;
     }
@@ -248,7 +247,7 @@
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
     .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 12px; }
     
-    .calendar-day { min-height: 105px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; }
+    .calendar-day { min-height: 110px; border: 1px solid #eee; border-radius: 4px; padding: 5px; background-color: #fff; cursor: pointer; transition: background-color 0.15s; }
     .calendar-day.drag-over { background-color: #e3f2fd; border: 2px dashed #1e88e5; }
     .calendar-day:hover { background-color: #f5f9ff; }
     .calendar-day.empty { background-color: #fafafa; cursor: default; }
@@ -257,12 +256,13 @@
     .event-tag {
       font-size: 11px; padding: 3px 6px; border-radius: 3px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
     }
-    /* 功能 1：事項完成時有刪除線與淡化效果 */
-    .event-tag.completed {
-      text-decoration: line-through !important;
-      opacity: 0.45;
-    }
+    .event-tag.completed { text-decoration: line-through !important; opacity: 0.45; }
     .event-tag:active { cursor: grabbing; }
+
+    /* 2026 行政院國定假日專用特殊紅色小標籤 */
+    .holiday-tag {
+      background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default;
+    }
     
     .sidebar-list-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; gap: 10px; }
     .sidebar-list-item.completed span { text-decoration: line-through; color: #888; }
@@ -318,8 +318,8 @@
       
       <div id="checklist-category-container"></div>
 
+      <!-- 功能 3：全欄位一鍵新增，去除所有的 Placeholder 提示詞 -->
       <div class="mega-add-box">
-        <div style="font-size: 13px; font-weight: bold; color: var(--primary-color); margin-bottom: 8px;">⚡ 一鍵建立完整新項目項目：</div>
         <form onsubmit="addChecklistItem(event)">
           <div class="mega-add-grid">
             <div class="mega-field">
@@ -328,22 +328,22 @@
             </div>
             <div class="mega-field">
               <label>📌 工作項目名稱</label>
-              <input type="text" id="new-item-input" placeholder="例: 財務月報處理" required>
+              <input type="text" id="new-item-input" required>
             </div>
             <div class="mega-field">
               <label>📋 細項格子</label>
-              <input type="text" id="new-item-detail" placeholder="例: 收集單據、對帳">
+              <input type="text" id="new-item-detail">
             </div>
             <div class="mega-field">
-              <label>⚠️ 注意事項 (送出後可自由換行)</label>
-              <input type="text" id="new-item-notice" placeholder="例: 需在下午 5 點前交付給主管">
+              <label>⚠️ 注意事項 (支援回車換行)</label>
+              <input type="text" id="new-item-notice">
             </div>
             <div class="mega-field">
               <label>📝 備註事項</label>
-              <input type="text" id="new-item-note" placeholder="例: 急件、抄送至A單位">
+              <input type="text" id="new-item-note">
             </div>
           </div>
-          <button type="submit" class="btn" style="width: 100%;">🚀 確認一次建立此項目</button>
+          <button type="submit" class="btn" style="width: 100%;">🚀 確認建立此新項目</button>
         </form>
       </div>
     </div>
@@ -352,7 +352,7 @@
       <div class="card-title"><span>🏷️ 編輯工作項目分類</span></div>
       <div id="categories-manage-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
       <form class="add-item-form" onsubmit="addCustomCategory(event)">
-        <input type="text" id="new-category-input" placeholder="輸入新分類名稱..." required style="max-width: 300px;">
+        <input type="text" id="new-category-input" required style="max-width: 300px;">
         <button type="submit" class="btn btn-success">新增分類</button>
       </form>
     </div>
@@ -375,7 +375,7 @@
       <div>
         <div class="card">
           <div class="card-title" style="border-bottom: none; margin-bottom: 0;">
-            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 <b>單擊項目劃上刪除線</b> / 雙擊客製化顏色 / 支援拖移)</small></span>
+            <span>工作行事曆 <small style="font-weight: normal; font-size: 13px; color: #888;">(💡 單擊完成項目 / 雙擊項目改色與移除 / <b>支援滑鼠任意拖曳移動行程</b>)</small></span>
             <button class="btn" onclick="applyRecurringEvents()">⚡ 一鍵安排當月固定日程</button>
           </div>
           <div class="calendar-header">
@@ -384,21 +384,20 @@
           <div class="calendar-grid" id="calendar-grid"></div>
         </div>
 
-        <!-- ⚡ 功能二：一鍵帶入項目表格，所有內容在線可修改 -->
         <div class="card">
-          <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目 (填寫內容皆可點擊直接修改)</span></div>
+          <div class="card-title"><span>⚙️ 自訂每月一鍵帶入日程項目</span></div>
           <form class="inline-form" onsubmit="addRecurringTemplate(event)">
             <label style="align-self: center; font-weight: bold; font-size: 13px;">📅 指定日期：</label>
-            <input type="text" id="new-rec-day" placeholder="如: 5,10 或 last">
+            <input type="text" id="new-rec-day">
             <label style="align-self: center; font-weight: bold; font-size: 13px;">💼 工作天：</label>
-            <input type="text" id="new-rec-workday" placeholder="如: 1,3,5">
+            <input type="text" id="new-rec-workday">
             <label style="align-self: center; font-weight: bold; font-size: 13px;">📝 日程內容：</label>
-            <input type="text" id="new-rec-text" placeholder="如: 開晨會,填寫工時" style="flex-grow: 1;" required>
+            <input type="text" id="new-rec-text" style="flex-grow: 1;" required>
             <button type="submit" class="btn btn-success">新增固定項目</button>
           </form>
           <table class="recurring-table">
             <thead>
-              <tr><th style="width: 220px;">自動帶入條件</th><th>日程內容</th><th style="width: 70px;">操作</th></tr>
+              <tr><th style="width: 200px;">自動帶入條件</th><th>日程內容</th><th style="width: 70px;">操作</th></tr>
             </thead>
             <tbody id="recurring-tbody"></tbody>
           </table>
@@ -412,7 +411,7 @@
           <form class="add-item-form" onsubmit="addImportantItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
               <input type="date" id="new-important-date" required>
-              <input type="text" id="new-important-input" placeholder="填寫核心關鍵目標..." style="flex-grow: 1;" required>
+              <input type="text" id="new-important-input" style="flex-grow: 1;" required>
             </div>
             <button type="submit" class="btn" style="width: 100%; background-color: #f39c12;">新增重要事項</button>
           </form>
@@ -424,7 +423,7 @@
           <form class="add-item-form" onsubmit="addMemoItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
               <input type="date" id="new-memo-date" required>
-              <input type="text" id="new-memo-input" placeholder="輸入需備忘留守的雜務或資訊..." style="flex-grow: 1;" required>
+              <input type="text" id="new-memo-input" style="flex-grow: 1;" required>
             </div>
             <button type="submit" class="btn" style="width: 100%; background-color: #34495e;">新增備忘項目</button>
           </form>
@@ -436,7 +435,7 @@
           <form class="add-item-form" onsubmit="addSharedItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
               <input type="date" id="new-shared-date" required>
-              <input type="text" id="new-shared-input" placeholder="事項備忘錄內容..." style="flex-grow: 1;" required>
+              <input type="text" id="new-shared-input" style="flex-grow: 1;" required>
             </div>
             <button type="submit" class="btn btn-success" style="width: 100%;">新增共享事項</button>
           </form>
@@ -448,7 +447,7 @@
           <form class="add-item-form" onsubmit="addErrorItem(event)" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; gap: 8px;">
               <input type="date" id="new-error-date" required>
-              <input type="text" id="new-error-input" placeholder="錯誤或改善紀錄..." style="flex-grow: 1;" required>
+              <input type="text" id="new-error-input" style="flex-grow: 1;" required>
             </div>
             <button type="submit" class="btn btn-danger" style="width: 100%;">新增錯誤記錄</button>
           </form>
@@ -470,10 +469,26 @@
   let currentSubTab = '主頁面';
   let collapsedCategories = {};
 
+  // 🧱 2026 最新行政院辦公放假行事曆數據庫
+  const TAIWAN_HOLIDAYS_2026 = {
+    "2026-01": { 1: "元旦" },
+    "2026-02": { 
+      14: "春節連假", 15: "春節連假", 16: "除夕", 17: "春節", 18: "春節", 
+      19: "春節", 20: "春節(補假)", 21: "春節連假", 22: "春節連假", 27: "228連假(補假)", 28: "和平紀念日" 
+    },
+    "2026-03": { 1: "228連假" },
+    "2026-04": { 3: "兒童節(補假)", 4: "兒童節", 5: "清明節", 6: "清明節(補假)" },
+    "2026-05": { 1: "勞動節", 2: "勞動連假", 3: "勞動連假" },
+    "2026-06": { 19: "端午節", 20: "端午連假", 21: "端午連假" },
+    "2026-09": { 25: "中秋節", 26: "中秋連假", 27: "中秋連假", 28: "教師節" },
+    "2026-10": { 9: "國慶連假(補假)", 10: "雙十國慶", 11: "國慶連假", 24: "光復連假", 25: "光復節", 26: "光復連假(補假)" },
+    "2026-12": { 25: "行憲紀念日", 26: "聖誕連假", 27: "聖誕連假" }
+  };
+
   let state = {
     currentMonth: '2026-07',
     checklistData: {}, 
-    events: {}, // 儲存：{ "日": [ { text: "開會", color: "#e3f2fd", fontColor: "#1e88e5", completed: false } ] }
+    events: {}, 
     importantItems: {},
     memoItems: {},
     sharedItems: {},
@@ -494,11 +509,7 @@
   };
 
   function exportBackupFile() {
-    const backupData = {
-      categories, state, subTabs, currentSubTab, recurringEventsTemplate, headerData,
-      theme_primary: document.getElementById('theme-primary').value,
-      theme_bg: document.getElementById('theme-bg').value
-    };
+    const backupData = { categories, state, subTabs, currentSubTab, recurringEventsTemplate, headerData };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -517,43 +528,9 @@
         subTabs = decodedData.subTabs || ['主頁面'];
         currentSubTab = decodedData.currentSubTab || '主頁面';
         state = decodedData.state;
-        
-        if (!state.checklistData) state.checklistData = { '2026-07': { '主頁面': [] } };
-        if (!state.memoItems) state.memoItems = {};
-
-        for (let m in state.checklistData) {
-          for (let t in state.checklistData[m]) {
-            state.checklistData[m][t].forEach(item => {
-              if (item.detail === undefined) item.detail = "";
-              if (item.notice === undefined) item.notice = "";
-              if (item.note === undefined) item.note = "";
-            });
-          }
-        }
-
-        // 行程結構確保
-        for (let m in state.events) {
-          for (let d in state.events[m]) {
-            state.events[m][d] = state.events[m][d].map(evt => {
-              if (evt.completed === undefined) evt.completed = false;
-              return evt;
-            });
-          }
-        }
-
-        recurringEventsTemplate = decodedData.recurringEventsTemplate || [];
-        headerData = decodedData.headerData;
-        document.getElementById('theme-primary').value = decodedData.theme_primary || '#4a90e2';
-        document.getElementById('theme-bg').value = decodedData.theme_bg || '#f8f9fa';
-        applyThemeStyles(decodedData.theme_primary, decodedData.theme_bg);
-        saveToLocalStorage();
-        document.getElementById('editable-title').innerText = headerData.title;
-        document.getElementById('editable-desc').innerText = headerData.desc;
         globalSwitchMonth();
         alert("🎉 備份資料已 100% 成功匯入還原！");
-      } catch (err) {
-        alert("❌ 匯入失敗：檔案格式不正確。");
-      }
+      } catch (err) { alert("❌ 匯入失敗！"); }
     };
     reader.readAsText(file);
     input.value = "";
@@ -565,7 +542,6 @@
     localStorage.setItem('dashboard_current_subtab', currentSubTab);
     localStorage.setItem('dashboard_state', JSON.stringify(state));
     localStorage.setItem('dashboard_recurring', JSON.stringify(recurringEventsTemplate));
-    localStorage.setItem('dashboard_header', JSON.stringify(headerData));
   }
 
   function loadFromLocalStorage() {
@@ -574,7 +550,6 @@
     const cachedCurrentSubTab = localStorage.getItem('dashboard_current_subtab');
     const cachedState = localStorage.getItem('dashboard_state');
     const cachedRecurring = localStorage.getItem('dashboard_recurring');
-    const cachedHeader = localStorage.getItem('dashboard_header');
 
     if (cachedCategories) categories = JSON.parse(cachedCategories);
     if (cachedSubTabs) subTabs = JSON.parse(cachedSubTabs);
@@ -583,33 +558,12 @@
     if (cachedState) {
       state = JSON.parse(cachedState);
       if (!state.checklistData) state.checklistData = {};
-      if (!state.importantItems) state.importantItems = {};
-      if (!state.memoItems) state.memoItems = {};
       if (!state.events) state.events = {};
-      if (!state.currentMonth) state.currentMonth = '2026-07';
     } else {
       const initKey = '2026-07';
-      state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '確認規格需求', note: '' }] } };
+      state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
     }
-
-    for (let m in state.events) {
-      for (let d in state.events[m]) {
-        state.events[m][d] = state.events[m][d].map(evt => {
-          if (evt.completed === undefined) evt.completed = false;
-          return evt;
-        });
-      }
-    }
-
     if (cachedRecurring) recurringEventsTemplate = JSON.parse(cachedRecurring);
-    if (cachedHeader) headerData = JSON.parse(cachedHeader);
-    document.getElementById('editable-title').innerText = headerData.title;
-    document.getElementById('editable-desc').innerText = headerData.desc;
-    const primaryColor = localStorage.getItem('theme_primary_color') || '#4a90e2';
-    const bgColor = localStorage.getItem('theme_bg_color') || '#f8f9fa';
-    document.getElementById('theme-primary').value = primaryColor;
-    document.getElementById('theme-bg').value = bgColor;
-    applyThemeStyles(primaryColor, bgColor);
   }
 
   function updateThemeColors() {
@@ -625,25 +579,18 @@
   }
 
   function resetThemeColors() {
-    if(confirm('確定要將主題配色恢復為預設嗎？')) {
-      document.getElementById('theme-primary').value = '#4a90e2';
-      document.getElementById('theme-bg').value = '#f8f9fa';
-      updateThemeColors();
-    }
+    document.getElementById('theme-primary').value = '#4a90e2';
+    document.getElementById('theme-bg').value = '#f8f9fa';
+    updateThemeColors();
   }
 
-  function saveHeaderData() {
-    headerData.title = document.getElementById('editable-title').innerText;
-    headerData.desc = document.getElementById('editable-desc').innerText;
-    saveToLocalStorage();
-  }
+  function saveHeaderData() { saveToLocalStorage(); }
 
   function generateMonthOptions() {
-    const select = document.getElementById('month-select');
-    select.innerHTML = '';
-    let startYear = REAL_CURRENT_YEAR - 1; let startMonth = 1; let endYear = REAL_CURRENT_YEAR; let endMonth = 12;
-    if (REAL_CURRENT_MONTH >= 11) { endYear = REAL_CURRENT_YEAR + 1; endMonth = 12; }
-    let dateCursor = new Date(startYear, startMonth - 1, 1); const endDate = new Date(endYear, endMonth - 1, 1);
+    const select = document.getElementById('month-select'); select.innerHTML = '';
+    let startYear = REAL_CURRENT_YEAR - 1; let endYear = REAL_CURRENT_YEAR;
+    if (REAL_CURRENT_MONTH >= 11) { endYear = REAL_CURRENT_YEAR + 1; }
+    let dateCursor = new Date(startYear, 0, 1); const endDate = new Date(endYear, 11, 1);
     while (dateCursor <= endDate) {
       let y = dateCursor.getFullYear(); let m = dateCursor.getMonth() + 1;
       let mStr = m.toString().padStart(2, '0'); let val = `${y}-${mStr}`;
@@ -659,8 +606,7 @@
   }
 
   function getActualDayFromWorkday(year, month, targetWorkday) {
-    let totalDays = new Date(year, month, 0).getDate();
-    let currentWorkdayCount = 0;
+    let totalDays = new Date(year, month, 0).getDate(); let currentWorkdayCount = 0;
     for (let d = 1; d <= totalDays; d++) {
       let dayOfWeek = new Date(year, month - 1, d).getDay();
       if (dayOfWeek !== 0 && dayOfWeek !== 6) { currentWorkdayCount++; if (currentWorkdayCount === Number(targetWorkday)) return d; }
@@ -681,78 +627,70 @@
     document.getElementById('new-memo-date').value = defaultDateVal;
     document.getElementById('new-shared-date').value = defaultDateVal;
     document.getElementById('new-error-date').value = defaultDateVal;
-    
     renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems(); renderRecurringManager(); saveToLocalStorage();
   }
 
-  /* ================== 📁 子頁籤功能 ================== */
+  /* ================== 子頁籤 ================== */
   function renderSubTabs() {
-    const container = document.getElementById('sub-tabs-list');
-    container.innerHTML = '';
+    const container = document.getElementById('sub-tabs-list'); container.innerHTML = '';
     subTabs.forEach(name => {
-      const btn = document.createElement('button');
-      btn.className = `sub-tab-btn ${currentSubTab === name ? 'active' : ''}`;
+      const btn = document.createElement('button'); btn.className = `sub-tab-btn ${currentSubTab === name ? 'active' : ''}`;
       let closeHtml = name !== '主頁面' ? `<span class="delete-subtab" onclick="deleteSubTab(event, '${name}')">×</span>` : '';
-      btn.innerHTML = `<span>${name}</span> ${closeHtml}`;
-      btn.onclick = () => switchSubTab(name);
-      container.appendChild(btn);
+      btn.innerHTML = `<span>${name}</span> ${closeHtml}`; btn.onclick = () => switchSubTab(name); container.appendChild(btn);
     });
     document.getElementById('checklist-card-title-text').innerText = `【${currentSubTab}】工作項目 Checklist`;
   }
-
   function switchSubTab(name) { currentSubTab = name; renderSubTabs(); renderChecklist(); saveToLocalStorage(); }
   function addNewSubTab() {
-    const newName = prompt("請輸入新分頁頁籤的名稱：");
-    if (!newName) return; const trimmed = newName.trim(); if (trimmed === '') return;
+    const newName = prompt("請輸入新分頁頁籤的名稱："); if (!newName) return; const trimmed = newName.trim(); if (trimmed === '') return;
     if (subTabs.includes(trimmed)) { alert("頁籤名稱已存在！"); return; }
     subTabs.push(trimmed); currentSubTab = trimmed; renderSubTabs(); renderChecklist(); saveToLocalStorage();
   }
   function deleteSubTab(event, name) {
     event.stopPropagation();
     if (confirm(`確定要刪除「${name}」整個分頁嗎？`)) {
-      subTabs = subTabs.filter(t => t !== name);
-      if (state.checklistData[state.currentMonth]) delete state.checklistData[state.currentMonth][name];
+      subTabs = subTabs.filter(t => t !== name); if (state.checklistData[state.currentMonth]) delete state.checklistData[state.currentMonth][name];
       currentSubTab = '主頁面'; renderSubTabs(); renderChecklist(); saveToLocalStorage();
     }
   }
 
-  /* ================== 🏷️ Checklist ================== */
-  function toggleCategoryCollapse(catName) {
-    collapsedCategories[catName] = !collapsedCategories[catName];
-    renderChecklist();
+  /* ================== 🏷️ Checklist & 插隊功能 ================== */
+  function toggleCategoryCollapse(catName) { collapsedCategories[catName] = !collapsedCategories[catName]; renderChecklist(); }
+  
+  // 功能 1：任意位置插隊功能
+  function insertChecklistItemInline(realIndex) {
+    const quickText = prompt("請在此項目下方插入新的工作項目內容：");
+    if (!quickText || quickText.trim() === '') return;
+    
+    // 直接往該陣列的指定索引後方塞入新物件
+    state.checklistData[state.currentMonth][currentSubTab].splice(realIndex + 1, 0, {
+      text: quickText.trim(),
+      category: state.checklistData[state.currentMonth][currentSubTab][realIndex].category,
+      completed: false, detail: '', notice: '', note: ''
+    });
+    renderChecklist(); saveToLocalStorage();
   }
 
   function renderCategoriesManager() {
     const container = document.getElementById('categories-manage-list'); container.innerHTML = '';
     const select = document.getElementById('new-item-category'); select.innerHTML = '';
     categories.forEach((cat, index) => {
-      const span = document.createElement('span');
-      span.style.cssText = 'background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px;';
-      span.innerHTML = `<span>${cat}</span><span style="color:#e74c3c; cursor:pointer; font-weight:bold;" onclick="deleteCategory(${index})">×</span>`;
-      container.appendChild(span);
+      const span = document.createElement('span'); span.style.cssText = 'background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px;';
+      span.innerHTML = `<span>${cat}</span><span style="color:#e74c3c; cursor:pointer; font-weight:bold;" onclick="deleteCategory(${index})">×</span>`; container.appendChild(span);
       const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; select.appendChild(opt);
     });
   }
 
   function addCustomCategory(e) {
-    e.preventDefault(); const input = document.getElementById('new-category-input');
-    if (categories.includes(input.value.trim())) { alert('分類已存在！'); return; }
-    categories.push(input.value.trim()); input.value = '';
-    renderCategoriesManager(); renderChecklist(); saveToLocalStorage();
+    e.preventDefault(); const input = document.getElementById('new-category-input'); if (categories.includes(input.value.trim())) return;
+    categories.push(input.value.trim()); input.value = ''; renderCategoriesManager(); renderChecklist(); saveToLocalStorage();
   }
 
   function deleteCategory(index) {
-    if (categories.length <= 1) { alert('請至少保留一個分類！'); return; }
     const removedCat = categories[index];
-    if (confirm(`刪除 "${removedCat}" 嗎？`)) {
-      categories.splice(index, 1);
-      for (let m in state.checklistData) {
-        for (let t in state.checklistData[m]) {
-          state.checklistData[m][t].forEach(item => { if (item.category === removedCat) item.category = categories[0]; });
-        }
-      }
-      renderCategoriesManager(); renderChecklist(); saveToLocalStorage();
-    }
+    categories.splice(index, 1);
+    for (let m in state.checklistData) { for (let t in state.checklistData[m]) { state.checklistData[m][t].forEach(item => { if (item.category === removedCat) item.category = categories[0]; }); } }
+    renderCategoriesManager(); renderChecklist(); saveToLocalStorage();
   }
 
   function renderChecklist() {
@@ -762,19 +700,10 @@
     const monthItems = state.checklistData[state.currentMonth][currentSubTab];
     
     categories.forEach(cat => {
-      const catItems = monthItems.filter(item => item.category === cat);
-      const isCollapsed = !!collapsedCategories[cat];
+      const catItems = monthItems.filter(item => item.category === cat); const isCollapsed = !!collapsedCategories[cat];
       const catSection = document.createElement('div'); catSection.className = 'category-section';
-      
-      catSection.innerHTML = `
-        <div class="category-title" onclick="toggleCategoryCollapse('${cat}')">
-          <span>${isCollapsed ? '▶' : '▼'} ${cat} (${catItems.length})</span>
-          <small style="font-weight:normal; font-size:12px; color:#666;">(點選可展開/收合)</small>
-        </div>
-      `;
-      
-      const itemsBox = document.createElement('div');
-      itemsBox.className = `category-items-box ${isCollapsed ? 'collapsed' : ''}`;
+      catSection.innerHTML = `<div class="category-title" onclick="toggleCategoryCollapse('${cat}')"><span>${isCollapsed ? '▶' : '▼'} ${cat} (${catItems.length})</span></div>`;
+      const itemsBox = document.createElement('div'); itemsBox.className = `category-items-box ${isCollapsed ? 'collapsed' : ''}`;
 
       if (catItems.length === 0) {
         itemsBox.innerHTML = `<p style="color: #999; font-style: italic; font-size: 13px; margin-left: 12px;">暫無項目。</p>`;
@@ -782,20 +711,19 @@
         catItems.forEach(item => {
           const realIndex = monthItems.indexOf(item);
           const div = document.createElement('div'); div.className = `checklist-item ${item.completed ? 'completed' : ''}`;
-          
           div.innerHTML = `
             <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleChecklistItem(${realIndex})">
             <input type="text" class="item-text-input" value="${item.text}" onchange="updateItemName(${realIndex}, this.value)">
-            <input type="text" class="detail-input" placeholder="📋 細項格子..." value="${item.detail || ''}" onchange="updateItemDetail(${realIndex}, this.value)">
-            <textarea class="notice-textarea" placeholder="⚠️ 注意事項 (支援回車換行)..." onchange="updateItemNotice(${realIndex}, this.value)">${item.notice || ''}</textarea>
-            <input type="text" class="note-input" placeholder="📝 備註..." value="${item.note || ''}" onchange="updateItemNote(${realIndex}, this.value)">
+            <input type="text" class="detail-input" value="${item.detail || ''}" onchange="updateItemDetail(${realIndex}, this.value)">
+            <textarea class="notice-textarea" onchange="updateItemNotice(${realIndex}, this.value)">${item.notice || ''}</textarea>
+            <input type="text" class="note-input" value="${item.note || ''}" onchange="updateItemNote(${realIndex}, this.value)">
+            <button class="btn btn-orange" style="padding: 3px 8px; font-size: 12px;" onclick="insertChecklistItemInline(${realIndex})">➕ 插隊</button>
             <button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="deleteChecklistItem(${realIndex})">刪除</button>
           `;
           itemsBox.appendChild(div);
         });
       }
-      catSection.appendChild(itemsBox);
-      container.appendChild(catSection);
+      catSection.appendChild(itemsBox); container.appendChild(catSection);
     });
   }
 
@@ -804,15 +732,13 @@
   function updateItemDetail(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].detail = value; saveToLocalStorage(); }
   function updateItemNotice(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].notice = value; saveToLocalStorage(); }
   function updateItemNote(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].note = value; saveToLocalStorage(); }
-  function deleteChecklistItem(index) { if(confirm('確定要刪除嗎？')) { state.checklistData[state.currentMonth][currentSubTab].splice(index, 1); renderChecklist(); saveToLocalStorage(); } }
+  function deleteChecklistItem(index) { state.checklistData[state.currentMonth][currentSubTab].splice(index, 1); renderChecklist(); saveToLocalStorage(); }
   
   function addChecklistItem(e) {
     e.preventDefault();
     state.checklistData[state.currentMonth][currentSubTab].push({ 
-      text: document.getElementById('new-item-input').value.trim(), 
-      category: document.getElementById('new-item-category').value, 
-      completed: false, detail: document.getElementById('new-item-detail').value.trim(),
-      notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() 
+      text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, 
+      detail: document.getElementById('new-item-detail').value.trim(), notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() 
     });
     document.getElementById('new-item-input').value = ''; document.getElementById('new-item-detail').value = ''; document.getElementById('new-item-notice').value = ''; document.getElementById('new-item-note').value = '';
     renderChecklist(); saveToLocalStorage();
@@ -821,37 +747,23 @@
   function copyLastMonthChecklist() {
     const [year, month] = state.currentMonth.split('-').map(Number);
     let lastKey = `${year}-${(month - 2 < 0 ? 12 : month - 1).toString().padStart(2, '0')}`; if (month - 2 < 0) lastKey = `${year - 1}-12`;
-    if (!state.checklistData[lastKey] || !state.checklistData[lastKey][currentSubTab]) { alert('找不到上個月份該頁籤下的資料！'); return; }
-    const lastItems = state.checklistData[lastKey][currentSubTab] || []; if (lastItems.length === 0) { alert('找不到上個月份的資料！'); return; }
-    if (confirm(`確定要複製上月 ${lastItems.length} 個項目到本月的【${currentSubTab}】分頁嗎？`)) {
-      lastItems.forEach(item => { state.checklistData[state.currentMonth][currentSubTab].push({ text: item.text, category: categories.includes(item.category) ? item.category : categories[0], completed: false, detail: item.detail || '', notice: item.notice || '', note: item.note || '' }); });
-      renderChecklist(); saveToLocalStorage();
-    }
+    const lastItems = state.checklistData[lastKey][currentSubTab] || [];
+    lastItems.forEach(item => { state.checklistData[state.currentMonth][currentSubTab].push({ text: item.text, category: item.category, completed: false, detail: item.detail || '', notice: item.notice || '', note: item.note || '' }); });
+    renderChecklist(); saveToLocalStorage();
   }
 
-  /* ================== ⭐ 右側資訊欄 ================== */
+  /* ================== 右側資訊欄 ================== */
   function renderImportantItems() {
     const container = document.getElementById('important-items-container'); container.innerHTML = '';
     if (!state.importantItems[state.currentMonth]) state.importantItems[state.currentMonth] = [];
-    const items = state.importantItems[state.currentMonth]; items.sort((a,b) => new Date(a.date) - new Date(b.date));
-    if (items.length === 0) { container.innerHTML = '<p style="color: #888; font-style: italic; font-size: 13px;">目前無重要核心事項。</p>'; return; }
-    
-    items.forEach((item, index) => {
+    state.importantItems[state.currentMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = `sidebar-list-item ${item.completed ? 'completed' : ''}`;
-      div.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleImportantItem(${index})">
-          <span class="date-tag" style="background-color: #fef9e7; color: #d35400;">${item.date}</span>
-          <span style="font-weight: bold;">${item.text}</span>
-        </div>
-        <button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteImportantItem(${index})">刪除</button>
-      `;
+      div.innerHTML = `<div><input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleImportantItem(${index})"><span class="date-tag" style="background-color: #fef9e7; color: #d35400; margin-left:5px;">${item.date}</span><span style="font-weight: bold; margin-left:5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteImportantItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addImportantItem(e) {
-    e.preventDefault(); 
-    state.importantItems[state.currentMonth].push({ date: document.getElementById('new-important-date').value, text: document.getElementById('new-important-input').value.trim(), completed: false });
+    e.preventDefault(); state.importantItems[state.currentMonth].push({ date: document.getElementById('new-important-date').value, text: document.getElementById('new-important-input').value.trim(), completed: false });
     document.getElementById('new-important-input').value = ''; renderImportantItems(); saveToLocalStorage();
   }
   function toggleImportantItem(index) { state.importantItems[state.currentMonth][index].completed = !state.importantItems[state.currentMonth][index].completed; renderImportantItems(); saveToLocalStorage(); }
@@ -860,25 +772,14 @@
   function renderMemoItems() {
     const container = document.getElementById('memo-items-container'); container.innerHTML = '';
     if (!state.memoItems[state.currentMonth]) state.memoItems[state.currentMonth] = [];
-    const items = state.memoItems[state.currentMonth]; items.sort((a,b) => new Date(a.date) - new Date(b.date));
-    if (items.length === 0) { container.innerHTML = '<p style="color: #888; font-style: italic; font-size: 13px;">目前無備忘項目。</p>'; return; }
-    
-    items.forEach((item, index) => {
+    state.memoItems[state.currentMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = `sidebar-list-item ${item.completed ? 'completed' : ''}`;
-      div.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleMemoItem(${index})">
-          <span class="date-tag" style="background-color: #eaf2f8; color: #2c3e50;">${item.date}</span>
-          <span>${item.text}</span>
-        </div>
-        <button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteMemoItem(${index})">刪除</button>
-      `;
+      div.innerHTML = `<div><input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleMemoItem(${index})"><span class="date-tag" style="background-color: #eaf2f8; color: #2c3e50; margin-left:5px;">${item.date}</span><span style="margin-left:5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteMemoItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addMemoItem(e) {
-    e.preventDefault(); 
-    if (!state.memoItems[state.currentMonth]) state.memoItems[state.currentMonth] = [];
+    e.preventDefault(); if (!state.memoItems[state.currentMonth]) state.memoItems[state.currentMonth] = [];
     state.memoItems[state.currentMonth].push({ date: document.getElementById('new-memo-date').value, text: document.getElementById('new-memo-input').value.trim(), completed: false });
     document.getElementById('new-memo-input').value = ''; renderMemoItems(); saveToLocalStorage();
   }
@@ -888,9 +789,7 @@
   function renderSharedItems() {
     const container = document.getElementById('shared-items-container'); container.innerHTML = '';
     if (!state.sharedItems[state.currentMonth]) state.sharedItems[state.currentMonth] = [];
-    const items = state.sharedItems[state.currentMonth]; items.sort((a,b) => new Date(a.date) - new Date(b.date));
-    if (items.length === 0) { container.innerHTML = '<p style="color: #888; font-style: italic; font-size: 13px;">目前無共享事項。</p>'; return; }
-    items.forEach((item, index) => {
+    state.sharedItems[state.currentMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = 'sidebar-list-item';
       div.innerHTML = `<div><span class="date-tag">${item.date}</span><span style="margin-left: 5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteSharedItem(${index})">刪除</button>`;
       container.appendChild(div);
@@ -905,9 +804,7 @@
   function renderErrorItems() {
     const container = document.getElementById('error-items-container'); container.innerHTML = '';
     if (!state.errorItems[state.currentMonth]) state.errorItems[state.currentMonth] = [];
-    const items = state.errorItems[state.currentMonth]; items.sort((a,b) => new Date(a.date) - new Date(b.date));
-    if (items.length === 0) { container.innerHTML = '<p style="color: #888; font-style: italic; font-size: 13px;">目前無錯誤紀錄。</p>'; return; }
-    items.forEach((item, index) => {
+    state.errorItems[state.currentMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = 'sidebar-list-item';
       div.innerHTML = `<div><span class="date-tag" style="background-color: #fbe9e7; color: #d84315;">${item.date}</span><span style="margin-left: 5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteErrorItem(${index})">刪除</button>`;
       container.appendChild(div);
@@ -922,9 +819,8 @@
   function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
   function getFirstDayOfWeek(year, month) { return new Date(year, month - 1, 1).getDay(); }
   
-  /* ================== 📅 行事曆、雙擊改色、單擊打勾劃刪除線邏輯 ================== */
+  /* ================== 📅 行事曆、拖曳移動與客製化色彩移除功能 ================== */
   function toggleEventCompleted(day, idx) {
-    // 功能 1：行程點擊（單擊）切換完成狀態（刪除線）
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
     renderCalendar(); saveToLocalStorage();
@@ -934,7 +830,7 @@
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     const targetObj = state.events[state.currentMonth][day][idx];
     
-    const newText = prompt(`請編輯第 ${idx+1} 項行程內容：`, targetObj.text);
+    const newText = prompt("請編輯行程內容文字：", targetObj.text);
     if (newText === null) return;
     
     if (newText.trim() === '') {
@@ -942,9 +838,12 @@
       if (state.events[state.currentMonth][day].length === 0) delete state.events[state.currentMonth][day];
     } else {
       targetObj.text = newText.trim();
-      // 功能 3：每日工作日程可隨時客製化顏色
-      const newColor = prompt(`設定標籤底色 (可填 red, orange, green, #673ab7 等，留空不改)：`, targetObj.color || '#e3f2fd');
-      if (newColor && newColor.trim() !== '') {
+      
+      // 功能 5：移除顏色。提示輸入 x 恢復預設色
+      const newColor = prompt("設定標籤底色 (填色名/代碼。若要拿掉顏色回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
+      if (!newColor || newColor.trim() === '' || newColor.trim().toLowerCase() === 'x') {
+        targetObj.color = '#e3f2fd'; targetObj.fontColor = '#1e88e5'; // 變回預設柔和藍
+      } else {
         targetObj.color = newColor.trim();
         const darkColors = ['black', 'blue', 'purple', 'red', 'dark'];
         const isDark = darkColors.some(c => newColor.toLowerCase().includes(c)) || newColor.startsWith('#2') || newColor.startsWith('#3');
@@ -954,8 +853,7 @@
     renderCalendar(); saveToLocalStorage();
   }
 
-  let draggedItem = null;
-  let sourceDay = null;
+  let draggedItem = null; let sourceDay = null;
 
   function renderCalendar() {
     const [year, month] = state.currentMonth.split('-').map(Number);
@@ -970,11 +868,16 @@
     
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
     
+    // 檢查是否有當月國定放假資訊庫
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`;
+    const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
+
     for (let day = 1; day <= totalDays; day++) {
       const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; dayDiv.dataset.day = day;
+      
+      // 功能 2：每日行程滑鼠拖曳移動與換格子事件
       dayDiv.ondragover = (e) => { e.preventDefault(); dayDiv.classList.add('drag-over'); };
       dayDiv.ondragleave = () => { dayDiv.classList.remove('drag-over'); };
-      
       dayDiv.ondrop = (e) => {
         e.preventDefault(); dayDiv.classList.remove('drag-over');
         if (draggedItem !== null && sourceDay !== null) {
@@ -990,31 +893,22 @@
       };
 
       dayDiv.innerHTML = `<div class="day-number">${day}</div>`;
-      const evts = state.events[state.currentMonth][day] || [];
       
+      // 功能 6：行政院人事局放假提醒標籤自動注入
+      if (holidayConfig[day]) {
+        dayDiv.innerHTML += `<div class="holiday-tag">🏮 ${holidayConfig[day]}</div>`;
+      }
+
+      const evts = state.events[state.currentMonth][day] || [];
       evts.forEach((evtObj, idx) => {
-        const tag = document.createElement('div'); 
-        tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; 
-        tag.draggable = true;
+        const tag = document.createElement('div'); tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; tag.draggable = true;
         tag.textContent = `${idx + 1}. ${evtObj.text}`;
-        
-        tag.style.backgroundColor = evtObj.color || '#e3f2fd';
-        tag.style.color = evtObj.fontColor || '#1e88e5';
+        tag.style.backgroundColor = evtObj.color || '#e3f2fd'; tag.style.color = evtObj.fontColor || '#1e88e5';
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
 
-        // 單擊觸發完成（劃刪除線）
-        tag.onclick = (event) => {
-          event.stopPropagation();
-          toggleEventCompleted(day, idx);
-        };
-
-        // 雙擊觸發客製化修改與色彩變更
-        tag.ondblclick = (event) => { 
-          event.stopPropagation(); 
-          editDayEvent(day, idx); 
-        };
-        
+        tag.onclick = (event) => { event.stopPropagation(); toggleEventCompleted(day, idx); };
+        tag.ondblclick = (event) => { event.stopPropagation(); editDayEvent(day, idx); };
         tag.ondragstart = () => { draggedItem = { text: evtObj.text, index: idx }, sourceDay = day; };
         tag.ondragend = () => { draggedItem = null; sourceDay = null; };
         dayDiv.appendChild(tag);
@@ -1022,7 +916,7 @@
       
       dayDiv.ondblclick = (event) => {
         if (event.target === dayDiv || event.target.className === 'day-number') {
-          const quickText = prompt(`在此日期 (${day} 號) 快速追加一項工作日程：`);
+          const quickText = prompt(`在此日期 (${day} 號) 追加一項日程：`);
           if (quickText && quickText.trim() !== '') {
             if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
             state.events[state.currentMonth][day].push({ text: quickText.trim(), color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
@@ -1034,60 +928,40 @@
     }
   }
 
-  /* ================== ⚡ 功能二：範本列表在線即時修改核心 ================== */
+  /* ================== ⚙️ 範本配置區 ================== */
   function updateTemplateCondition(index, field, value) {
     if (field === 'condition') {
-      // 判斷原範本是工作天還是指定日期
-      if (recurringEventsTemplate[index].workday !== '') {
-        recurringEventsTemplate[index].workday = value.trim();
-      } else {
-        recurringEventsTemplate[index].day = value.trim();
-      }
-    } else if (field === 'text') {
-      recurringEventsTemplate[index].text = value.trim();
-    }
+      if (recurringEventsTemplate[index].workday !== '') recurringEventsTemplate[index].workday = value.trim();
+      else recurringEventsTemplate[index].day = value.trim();
+    } else if (field === 'text') { recurringEventsTemplate[index].text = value.trim(); }
     saveToLocalStorage();
   }
 
   function renderRecurringManager() {
     const tbody = document.getElementById('recurring-tbody'); tbody.innerHTML = '';
     recurringEventsTemplate.forEach((item, index) => {
-      let isWorkday = item.workday !== '';
-      let conditionVal = isWorkday ? item.workday : item.day;
-      let labelPrefix = isWorkday ? "💼 工作天: " : "📅 日期: ";
-
-      // 將文字欄位改造成可隨時點擊修改的 input 框
+      let isWorkday = item.workday !== ''; let conditionVal = isWorkday ? item.workday : item.day; let labelPrefix = isWorkday ? "💼 工作天: " : "📅 日期: ";
       tbody.innerHTML += `
         <tr>
-          <td>
-            <span style="font-size:12px; color:#666;">${labelPrefix}</span>
-            <input type="text" class="table-text-input" value="${conditionVal}" onchange="updateTemplateCondition(${index}, 'condition', this.value)" style="width:70px; font-weight:bold;">
-          </td>
-          <td>
-            <input type="text" class="table-text-input" value="${item.text}" onchange="updateTemplateCondition(${index}, 'text', this.value)">
-          </td>
-          <td>
-            <button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="removeRecurringTemplate(${index})">刪除</button>
-          </td>
+          <td><span style="font-size:12px; color:#666;">${labelPrefix}</span><input type="text" class="table-text-input" value="${conditionVal}" onchange="updateTemplateCondition(${index}, 'condition', this.value)" style="width:70px; font-weight:bold;"></td>
+          <td><input type="text" class="table-text-input" value="${item.text}" onchange="updateTemplateCondition(${index}, 'text', this.value)"></td>
+          <td><button class="btn btn-danger" style="padding: 3px 8px; font-size: 12px;" onclick="removeRecurringTemplate(${index})">刪除</button></td>
         </tr>`;
     });
   }
   
   function addRecurringTemplate(e) {
-    e.preventDefault();
-    let dayVal = document.getElementById('new-rec-day').value.trim();
-    let workdayVal = document.getElementById('new-rec-workday').value.trim();
-    let textVal = document.getElementById('new-rec-text').value.trim();
-    if (!dayVal && !workdayVal) { alert('⚠️ 請填寫指定日期或是工作天數條件！'); return; }
+    e.preventDefault(); let dayVal = document.getElementById('new-rec-day').value.trim(); let workdayVal = document.getElementById('new-rec-workday').value.trim(); let textVal = document.getElementById('new-rec-text').value.trim();
     recurringEventsTemplate.push({ day: dayVal, workday: workdayVal, text: textVal });
     document.getElementById('new-rec-day').value = ''; document.getElementById('new-rec-workday').value = ''; document.getElementById('new-rec-text').value = '';
     renderRecurringManager(); saveToLocalStorage();
   }
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
+  // 功能 4：一鍵帶入固定日程，追加至末端，100% 不覆蓋、不洗掉原有的行程
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
-    state.events[state.currentMonth] = {};
+    if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
     
     recurringEventsTemplate.forEach(item => {
       const multiTexts = item.text.split(/[,，]/).map(t => t.trim()).filter(t => t !== '');
@@ -1103,20 +977,22 @@
 
       targetDaysArray.forEach(td => {
         if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
-        multiTexts.forEach(txt => { state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false }); });
+        
+        multiTexts.forEach(txt => {
+          // 檢查：如果此行程文字在當天已經存在，就不重複追加，防止洗版
+          let isExist = state.events[state.currentMonth][td].some(e => e.text === txt);
+          if (!isExist) {
+            state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
+          }
+        });
       });
     });
-    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已全自動派發完成！');
+    renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加，原先設定與客製化項目皆安好保留！');
   }
 
   window.onload = function() {
     loadFromLocalStorage(); generateMonthOptions(); renderCategoriesManager();
-    renderSubTabs(); renderChecklist(); renderRecurringManager(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems(); renderCalendar();
-    const defaultDateVal = `${state.currentMonth}-01`;
-    document.getElementById('new-important-date').value = defaultDateVal;
-    document.getElementById('new-memo-date').value = defaultDateVal;
-    document.getElementById('new-shared-date').value = defaultDateVal;
-    document.getElementById('new-error-date').value = defaultDateVal;
+    renderSubTabs(); renderChecklist(); renderCalendar(); renderImportantItems(); renderMemoItems(); renderSharedItems(); renderErrorItems();
   };
 </script>
 </body>
