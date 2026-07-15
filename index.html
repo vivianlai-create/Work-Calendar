@@ -45,9 +45,11 @@
     .tab-btn.active { background-color: var(--primary-color); color: white; box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3); }
 
     .sub-tabs-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background-color: #f0f0f0; padding: 10px; border-radius: 8px; flex-wrap: wrap; }
-    .sub-tab-btn { padding: 6px 15px; font-size: 14px; border: 1px solid #ccc; background-color: #fff; color: #333; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .sub-tab-btn { padding: 6px 15px; font-size: 14px; border: 1px solid #ccc; background-color: #fff; color: #333; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none; }
     .sub-tab-btn.active { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: bold; }
-    .delete-subtab { color: #ff4d4d; font-weight: bold; cursor: pointer; }
+    .sub-tab-btn.drag-over { border: 2px dashed var(--primary-color); background-color: #e3f2fd; }
+    .delete-subtab { color: #ff4d4d; font-weight: bold; cursor: pointer; margin-left: 4px; }
+    .edit-subtab { color: #f39c12; font-weight: bold; cursor: pointer; margin-left: 4px; }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -63,6 +65,7 @@
     .category-section { margin-bottom: 25px; }
     .category-title { font-size: 15px; font-weight: bold; color: #555; background-color: #eaeaea; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
     .category-title:hover { background-color: #dfdfdf; }
+    .category-title.drag-over { border: 2px dashed var(--primary-color); background-color: #e3f2fd; }
     .category-items-box { display: block; }
     .category-items-box.collapsed { display: none; }
 
@@ -228,7 +231,7 @@
       font-size: 14px;
       border: none;
       background: transparent;
-      width: 60%;
+      width: 55%;
       color: inherit; 
     }
     .memo-card-title-input:focus {
@@ -238,7 +241,8 @@
     .memo-header-controls {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+      flex-shrink: 0; /* 🚀 防止控制項區域被寬度壓縮擠掉 */
     }
     .memo-color-wrapper {
       position: relative;
@@ -255,14 +259,24 @@
       cursor: pointer;
     }
     
+    /* 🚀 強制刪除按鈕顯現，設定固定大小並防止被壓縮 */
     .memo-card-delete-btn {
-      color: #ff4d4d;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      background: none;
-      font-size: 16px;
-      padding: 0;
+      color: #ff4d4d !important;
+      font-weight: bold !important;
+      cursor: pointer !important;
+      border: none !important;
+      background: none !important;
+      font-size: 18px !important;
+      padding: 0 !important;
+      line-height: 1 !important;
+      width: 20px !important;
+      height: 20px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      opacity: 1 !important;
+      visibility: visible !important;
     }
     .memo-card-content {
       border: none;
@@ -313,7 +327,7 @@
   <!-- 分頁一：Checklist -->
   <div id="tab-checklist" class="tab-content active">
     <div class="sub-tabs-container">
-      <span style="font-weight: bold; font-size: 14px; color: #555;">📁 項目頁籤：</span>
+      <span style="font-weight: bold; font-size: 14px; color: #555;">📁 項目頁籤：<small style="font-size:11px; color:#999; font-weight:normal;">(💡 可直接拖曳調整順序)</small></span>
       <div id="sub-tabs-list" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"></div>
       <button class="btn btn-success" style="padding: 4px 10px; font-size: 12px; margin-left: 10px;" onclick="addNewSubTab()">＋新增頁籤</button>
       
@@ -372,7 +386,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title"><span>🏷️ 編輯工作項目分類</span></div>
+      <div class="card-title"><span>🏷️ 編輯工作項目分類 <small style="font-size:12px; color:#888; font-weight:normal;">(💡 拖曳分類可更改顯示順序，點擊 ✏️ 可修改分類名稱)</small></span></div>
       <div id="categories-manage-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
       <form class="add-item-form" onsubmit="addCustomCategory(event)">
         <input type="text" id="new-category-input" required style="max-width: 300px;">
@@ -529,7 +543,7 @@
   <div id="tab-scratchpad" class="tab-content">
     <div class="card">
       <div class="card-title">
-        <span>📌 桌面隨手貼 (按住頂部可拖曳，手動拉動右下角可縮放大小，配色資訊自由點選自訂)</span>
+        <span>📌 桌面隨手貼 (按住頂部可拖曳，手動拉動右下角可縮放大小，配置防超出畫面保護)</span>
         <button class="btn btn-success" onclick="addNewMemoCard()">＋新增便貼紙</button>
       </div>
       <div id="scratchpad-board" class="scratchpad-board"></div>
@@ -567,7 +581,8 @@
     { id: 'memo-1', title: '會議大綱', content: '與團隊確認串接細節。', x: 50, y: 50, w: 260, h: 180, bgColor: '#fffef2', textColor: '#5d4037' }
   ];
 
-  const TAIWAN_HOLIDAYS_2026 = {
+  // 預設 2026 節假日
+  let TAIWAN_HOLIDAYS = {
     "2026-01": { 1: "元旦" },
     "2026-02": { 14: "春節連假", 15: "春節連假", 16: "除夕", 17: "春節", 18: "春節", 19: "春節", 20: "春節(補假)", 21: "春節連假", 22: "春節連假", 27: "228連假(補假)", 28: "和平紀念日" },
     "2026-03": { 1: "228連假" },
@@ -602,6 +617,33 @@
   ];
 
   let headerData = { title: "工作儀表板 Ultimate Pro", desc: "" };
+
+  async function fetchLatestTaiwanHolidays() {
+    try {
+      const res = await fetch('https://cdn.jsdelivr.net/gh/v62308/taiwan-workday-calendar@api/api/calendar.json');
+      if (!res.ok) return;
+      const rawData = await res.json();
+      
+      const tempHolidays = {};
+      rawData.forEach(item => {
+        if (item.isHoliday) {
+          const dateStr = item.date; 
+          const parts = dateStr.split('-');
+          if (parts.length === 3) {
+            const yearMonth = `${parts[0]}-${parts[1]}`;
+            const dayNum = parseInt(parts[2], 10);
+            if (!tempHolidays[yearMonth]) tempHolidays[yearMonth] = {};
+            tempHolidays[yearMonth][dayNum] = item.holidayCategory || "放假日";
+          }
+        }
+      });
+      TAIWAN_HOLIDAYS = Object.assign({}, TAIWAN_HOLIDAYS, tempHolidays);
+      renderCalendar();
+      console.log("⚡ 成功同步最新行政院放假資訊！");
+    } catch (e) {
+      console.warn("⚠️ 自動取得行政院放假資訊失敗，採用本地預設節假日。", e);
+    }
+  }
 
   function exportBackupFile() {
     const backupData = { categories, state, subTabs, currentSubTab, recurringEventsTemplate, headerData, scratchpadCards };
@@ -786,29 +828,109 @@
   }
 
   /* ================== 子頁籤 ================== */
+  let subTabDragIdx = null;
+
   function renderSubTabs() {
     const container = document.getElementById('sub-tabs-list'); container.innerHTML = '';
-    subTabs.forEach(name => {
-      const btn = document.createElement('button'); btn.className = `sub-tab-btn ${currentSubTab === name ? 'active' : ''}`;
-      let closeHtml = name !== '主頁面' ? `<span class="delete-subtab" onclick="deleteSubTab(event, '${name}')">×</span>` : '';
-      btn.innerHTML = `<span>${name}</span> ${closeHtml}`; btn.onclick = () => switchSubTab(name); container.appendChild(btn);
+    subTabs.forEach((name, index) => {
+      const btn = document.createElement('button'); 
+      btn.className = `sub-tab-btn ${currentSubTab === name ? 'active' : ''}`;
+      btn.draggable = true; 
+
+      btn.ondragstart = (e) => { subTabDragIdx = index; e.stopPropagation(); };
+      btn.ondragover = (e) => { e.preventDefault(); btn.classList.add('drag-over'); };
+      btn.ondragleave = () => { btn.classList.remove('drag-over'); };
+      btn.ondrop = (e) => {
+        e.preventDefault(); btn.classList.remove('drag-over');
+        if (subTabDragIdx !== null && subTabDragIdx !== index) {
+          const [moved] = subTabs.splice(subTabDragIdx, 1);
+          subTabs.splice(index, 0, moved);
+          renderSubTabs();
+          saveToLocalStorage();
+        }
+        subTabDragIdx = null;
+      };
+
+      let controlsHtml = `
+        <span class="edit-subtab" onclick="event.stopPropagation(); renameSubTab('${name}')">✏️</span>
+        <span class="delete-subtab" onclick="event.stopPropagation(); deleteSubTab(event, '${name}')">×</span>
+      `;
+      btn.innerHTML = `<span>${name}</span> ${controlsHtml}`; 
+      btn.onclick = () => switchSubTab(name); 
+      container.appendChild(btn);
     });
     document.getElementById('checklist-card-title-text').innerText = `【${currentSubTab}】工作項目 Checklist`;
     document.getElementById('yearly-tracker-title').innerText = `📊 【${currentSubTab}】分頁年度工作項目完成狀態 (2026年 1-12 月全局追蹤)`;
     renderYearlyProgressTracker();
   }
+
   function switchSubTab(name) { currentSubTab = name; renderSubTabs(); renderChecklist(); saveToLocalStorage(); }
+  
   function addNewSubTab() {
     const newName = prompt("請輸入新分頁頁籤的名稱："); if (!newName) return; const trimmed = newName.trim(); if (trimmed === '') return;
     if (subTabs.includes(trimmed)) { alert("頁籤名稱已存在！"); return; }
     subTabs.push(trimmed); currentSubTab = trimmed; renderSubTabs(); renderChecklist(); saveToLocalStorage();
   }
+
+  function renameSubTab(oldName) {
+    const newName = prompt(`請輸入頁籤 [${oldName}] 的新名稱：`, oldName);
+    if (!newName) return;
+    const trimmed = newName.trim();
+    if (trimmed === '' || trimmed === oldName) return;
+    if (subTabs.includes(trimmed)) { alert("此頁籤名稱已存在！"); return; }
+
+    const index = subTabs.indexOf(oldName);
+    if (index !== -1) {
+      subTabs[index] = trimmed;
+      for (let m in state.checklistData) {
+        if (state.checklistData[m] && state.checklistData[m][oldName]) {
+          state.checklistData[m][trimmed] = state.checklistData[m][oldName];
+          delete state.checklistData[m][oldName];
+        }
+      }
+      if (currentSubTab === oldName) {
+        currentSubTab = trimmed;
+      }
+      renderSubTabs();
+      renderChecklist();
+      saveToLocalStorage();
+      alert(`🎉 頁籤名稱已更新為: ${trimmed}`);
+    }
+  }
+
   function deleteSubTab(event, name) {
     event.stopPropagation();
-    if (confirm(`確定要刪除整個分頁嗎？`)) {
-      subTabs = subTabs.filter(t => t !== name); if (state.checklistData[state.currentMonth]) delete state.checklistData[state.currentMonth][name];
-      currentSubTab = '主頁面'; renderSubTabs(); renderChecklist(); saveToLocalStorage();
+    
+    let hasData = false;
+    let dataCount = 0;
+    for (let m in state.checklistData) {
+      if (state.checklistData[m] && state.checklistData[m][name] && state.checklistData[m][name].length > 0) {
+        hasData = true;
+        dataCount += state.checklistData[m][name].length;
+      }
     }
+
+    if (hasData) {
+      if (!confirm(`⚠️ 警示：[${name}] 頁籤在系統中目前含有 ${dataCount} 項工作項目資料！\n確認仍要永久刪除此頁籤及底下所有資料嗎？`)) {
+        return;
+      }
+    } else {
+      if (!confirm(`確定要刪除 [${name}] 項目頁籤嗎？`)) return;
+    }
+
+    subTabs = subTabs.filter(t => t !== name);
+    for (let m in state.checklistData) {
+      if (state.checklistData[m]) delete state.checklistData[m][name];
+    }
+    
+    if (subTabs.length === 0) {
+      subTabs.push('主頁面');
+    }
+
+    currentSubTab = subTabs[0];
+    renderSubTabs();
+    renderChecklist();
+    saveToLocalStorage();
   }
 
   function renderYearlyProgressTracker() {
@@ -833,6 +955,8 @@
   }
 
   /* ================== 🏷️ Checklist ================== */
+  let categoryDragIdx = null;
+
   function toggleCategoryCollapse(catName) { collapsedCategories[catName] = !collapsedCategories[catName]; renderChecklist(); }
   function insertChecklistItemInline(realIndex) {
     const quickText = prompt("請在此項目下方插入新的工作項目內容："); if (!quickText || quickText.trim() === '') return;
@@ -844,10 +968,64 @@
     const container = document.getElementById('categories-manage-list'); container.innerHTML = '';
     const select = document.getElementById('new-item-category'); select.innerHTML = '';
     categories.forEach((cat, index) => {
-      const span = document.createElement('span'); span.style.cssText = 'background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px;';
-      span.innerHTML = `<span>${cat}</span><span style="color:#e74c3c; cursor:pointer; font-weight:bold;" onclick="deleteCategory(${index})">×</span>`; container.appendChild(span);
+      const span = document.createElement('span'); 
+      span.draggable = true;
+      span.style.cssText = 'background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: grab;';
+      
+      // 🚀 【第 1 點】新增分類編輯按鈕 (✏️) 支援分類名稱修改
+      span.innerHTML = `
+        <span>☰ ${cat}</span>
+        <span style="color:#f39c12; cursor:pointer; font-weight:bold; margin-left:4px;" onclick="event.stopPropagation(); renameCategory(${index}, '${cat}')">✏️</span>
+        <span style="color:#e74c3c; cursor:pointer; font-weight:bold; margin-left:4px;" onclick="event.stopPropagation(); deleteCategory(${index})">×</span>
+      `; 
+      
+      span.ondragstart = (e) => { categoryDragIdx = index; e.stopPropagation(); };
+      span.ondragover = (e) => { e.preventDefault(); span.style.borderColor = 'var(--primary-color)'; };
+      span.ondragleave = () => { span.style.borderColor = '#ccc'; };
+      span.ondrop = (e) => {
+        e.preventDefault(); span.style.borderColor = '#ccc';
+        if (categoryDragIdx !== null && categoryDragIdx !== index) {
+          const [moved] = categories.splice(categoryDragIdx, 1);
+          categories.splice(index, 0, moved);
+          renderCategoriesManager();
+          renderChecklist();
+          renderYearlyProgressTracker();
+          saveToLocalStorage();
+        }
+        categoryDragIdx = null;
+      };
+
+      container.appendChild(span);
       const opt = document.createElement('option'); opt.value = cat; opt.textContent = cat; select.appendChild(opt);
     });
+  }
+
+  // 🚀 【第 1 點】修改工作項目分類名稱，同步關聯所有工作數據
+  function renameCategory(index, oldName) {
+    const newName = prompt(`請輸入分類 [${oldName}] 的新名稱：`, oldName);
+    if (!newName) return;
+    const trimmed = newName.trim();
+    if (trimmed === '' || trimmed === oldName) return;
+    if (categories.includes(trimmed)) { alert("此分類名稱已存在！"); return; }
+
+    categories[index] = trimmed;
+    // 全域同步更新關聯的所有資料
+    for (let m in state.checklistData) {
+      for (let t in state.checklistData[m]) {
+        if (Array.isArray(state.checklistData[m][t])) {
+          state.checklistData[m][t].forEach(item => {
+            if (item.category === oldName) {
+              item.category = trimmed;
+            }
+          });
+        }
+      }
+    }
+    renderCategoriesManager();
+    renderChecklist();
+    renderYearlyProgressTracker();
+    saveToLocalStorage();
+    alert(`🎉 分類名稱已成功修改為: ${trimmed}`);
   }
 
   function addCustomCategory(e) {
@@ -856,8 +1034,37 @@
   }
 
   function deleteCategory(index) {
-    const removedCat = categories[index]; categories.splice(index, 1);
-    for (let m in state.checklistData) { for (let t in state.checklistData[m]) { state.checklistData[m][t].forEach(item => { if (item.category === removedCat) item.category = categories[0]; }); } }
+    const removedCat = categories[index];
+    
+    let hasData = false;
+    let dataCount = 0;
+    for (let m in state.checklistData) {
+      for (let t in state.checklistData[m]) {
+        const items = state.checklistData[m][t];
+        if (Array.isArray(items)) {
+          const count = items.filter(item => item.category === removedCat).length;
+          if (count > 0) {
+            hasData = true;
+            dataCount += count;
+          }
+        }
+      }
+    }
+
+    if (hasData) {
+      if (!confirm(`⚠️ 警示：分類 [${removedCat}] 目前包含 ${dataCount} 個工作項目！\n確認仍要永久刪除此分類嗎？(其餘項目將安全降級到第一個分類)`)) {
+        return;
+      }
+    } else {
+      if (!confirm(`確定要刪除分類 [${removedCat}] 嗎？`)) return;
+    }
+
+    categories.splice(index, 1);
+    for (let m in state.checklistData) { 
+      for (let t in state.checklistData[m]) { 
+        state.checklistData[m][t].forEach(item => { if (item.category === removedCat) item.category = categories[0]; }); 
+      } 
+    }
     renderCategoriesManager(); renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage();
   }
 
@@ -1072,7 +1279,7 @@
   function copySingleDayEventsToClipboard(day) {
     const dayEvents = state.events[state.currentMonth]?.[day] || [];
     if (dayEvents.length === 0) {
-      alert(`⚠️ ${day}號 目前沒有安排任何工作日程喔！`);
+      alert(`⚠️ ${day}號 目前沒有安排 any 工作日程喔！`);
       return;
     }
 
@@ -1131,7 +1338,8 @@
     for (let i = 0; i < firstDayIndex; i++) { const emp = document.createElement('div'); emp.className = 'calendar-day empty'; grid.appendChild(emp); }
     
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
-    const monthKey = `${year}-${month.toString().padStart(2, '0')}`; const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`; 
+    const holidayConfig = TAIWAN_HOLIDAYS[monthKey] || {}; 
 
     const systemDate = new Date();
     const isCurrentDashboardYearMonth = (systemDate.getFullYear() === year && (systemDate.getMonth() + 1) === month);
@@ -1270,7 +1478,8 @@
   function applyRecurringEvents() {
     const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
     if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
-    const monthKey = `${year}-${month.toString().padStart(2, '0')}`; const holidayConfig = TAIWAN_HOLIDAYS_2026[monthKey] || {};
+    const monthKey = `${year}-${month.toString().padStart(2, '0')}`; 
+    const holidayConfig = TAIWAN_HOLIDAYS[monthKey] || {}; 
 
     function isHoliday(dayNum) {
       const dateObj = new Date(year, month - 1, dayNum); const dayOfWeek = dateObj.getDay();
@@ -1357,15 +1566,29 @@
               🎨
               <input type="color" class="memo-color-input" value="${bgColor}" onchange="updateCardCustomColor(${idx}, this.value)">
             </div>
-            <button class="memo-card-delete-btn" onclick="deleteMemoCard(${idx})">×</button>
+            <!-- 🚀 【第 2 點】使用 fixed-size 控制與 flex-shrink，更換成不易被排擠之 ✖ 字符號確保永不隱藏 -->
+            <button class="memo-card-delete-btn" onclick="deleteMemoCard(${idx})" title="刪除便貼紙">✖</button>
           </div>
         </div>
         <textarea class="memo-card-content" oninput="updateMemoCardContent(${idx}, this.value)" placeholder="輸入備忘...">${card.content}</textarea>
       `;
       
       cardEl.addEventListener('mouseup', () => {
-        const computedW = cardEl.offsetWidth;
-        const computedH = cardEl.offsetHeight;
+        const boardRect = board.getBoundingClientRect();
+        let computedW = cardEl.offsetWidth;
+        let computedH = cardEl.offsetHeight;
+
+        const maxW = boardRect.width - card.x;
+        if (computedW > maxW) {
+          computedW = maxW;
+          cardEl.style.width = computedW + 'px';
+        }
+        const maxH = boardRect.height - card.y;
+        if (computedH > maxH) {
+          computedH = maxH;
+          cardEl.style.height = computedH + 'px';
+        }
+
         scratchpadCards[idx].w = computedW;
         scratchpadCards[idx].h = computedH;
         saveToLocalStorage();
@@ -1390,7 +1613,6 @@
     activeCard = document.getElementById(cardId);
     
     const rect = activeCard.getBoundingClientRect();
-    const boardRect = document.getElementById('scratchpad-board').getBoundingClientRect();
     
     offsetX = e.clientX - rect.left;
     offsetY = e.clientY - rect.top;
@@ -1493,7 +1715,6 @@
     link.click();
   }
 
-  // 🚀 修正 1：重構導入機制為「智慧型無損追加 (Append/Merge)」，絕不覆蓋使用者原有的資料
   function importFullChecklistSOPTemplate(input) {
     const file = input.files[0]; if (!file) return;
     const reader = new FileReader();
@@ -1506,7 +1727,6 @@
           return;
         }
 
-        // 1. 智慧合併「大分類 (Categories)」：不存在的分類才追加，存在的保留
         if (Array.isArray(sopPackage.categories)) {
           sopPackage.categories.forEach(cat => {
             const trimmedCat = cat.trim();
@@ -1516,7 +1736,6 @@
           });
         }
 
-        // 2. 智慧合併「項目頁籤 (SubTabs)」：不存在的頁籤才追加，存在的保留
         if (Array.isArray(sopPackage.subTabs)) {
           sopPackage.subTabs.forEach(tab => {
             const trimmedTab = tab.trim();
@@ -1526,7 +1745,6 @@
           });
         }
         
-        // 3. 智慧合併「Checklist 任務明細」：採用非破壞性追加
         if (!state.checklistData[state.currentMonth]) state.checklistData[state.currentMonth] = {};
         const currentMonthChecklist = state.checklistData[state.currentMonth];
         
@@ -1534,7 +1752,6 @@
         let skippedItemsCount = 0;
 
         for (let tabName in sopPackage.checklistData) {
-          // 如果當前月份還沒有這個頁籤的空間，則建立全新空陣列
           if (!currentMonthChecklist[tabName]) {
             currentMonthChecklist[tabName] = [];
           }
@@ -1543,18 +1760,15 @@
             sopPackage.checklistData[tabName].forEach(newItem => {
               if (newItem.text) {
                 const trimmedText = newItem.text.trim();
-                
-                // 🚀 防重機制：檢查該頁籤內是否已經存在「同名工作」
                 const isDuplicate = currentMonthChecklist[tabName].some(existingItem => existingItem.text.trim() === trimmedText);
                 
                 if (!isDuplicate) {
-                  // 分類安全降級：如果分類被修改過，找不到則丟到第一個分類
                   const finalCategory = categories.includes(newItem.category) ? newItem.category : categories[0];
                   
                   currentMonthChecklist[tabName].push({
                     text: trimmedText,
                     category: finalCategory,
-                    completed: false, // 新部署任務預設初始化為未完成
+                    completed: false,
                     detail: newItem.detail || '',
                     notice: newItem.notice || '',
                     note: newItem.note || ''
@@ -1568,7 +1782,6 @@
           }
         }
 
-        // 4. 更新 UI 介面
         renderCategoriesManager();
         renderSubTabs();
         renderChecklist();
@@ -1598,6 +1811,8 @@
     renderCategoriesManager(); 
     globalSwitchMonth();
     renderScratchpadCards(); 
+    
+    fetchLatestTaiwanHolidays();
   };
 </script>
 </body>
