@@ -126,7 +126,6 @@
     
     .today-tag { position: absolute; top: 4px; right: 4px; background-color: #f1c40f; color: #2c3e50; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
 
-    /* 🏆 修正 3：確保完成後的完成樣式刪除線與不透明度正常聯動 */
     .event-tag {
       font-size: 11px; padding: 3px 4px; border-radius: 3px; margin-bottom: 3px; white-space: pre-wrap; word-break: break-all; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s;
       display: flex; justify-content: space-between; align-items: center;
@@ -137,7 +136,6 @@
 
     .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; overflow: hidden; text-overflow: ellipsis; }
     
-    /* 🏆 修正 4：懸浮箱加上 pointer-events 控制，確保拉拽物體可以順暢進入並釋放 */
     .batch-box { 
       position: fixed; bottom: 20px; right: 20px; width: 320px; z-index: 1000; background-color: #f4ecf7; border: 2px dashed #9b59b6; border-radius: 8px; padding: 12px; margin-top: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: transform 0.2s, background-color 0.2s;
     }
@@ -160,7 +158,6 @@
     .badge-undone { background-color: #f8d7da; color: #721c24; }
     .badge-none { background-color: #e2e3e5; color: #383d41; }
 
-    /* 🏆 修正 2：多卡片自定義移動隨手便條紙專用樣式 */
     .scratchpad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
     .scratchpad-card { background-color: #fffef0; border: 1px solid #e6dbb3; border-radius: 6px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 8px; position: relative; }
     .scratchpad-card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #e6dbb3; padding-bottom: 6px; }
@@ -186,9 +183,7 @@
     <button class="btn" style="background-color: #2ecc71;" onclick="exportBackupFile()">📤 下載資料備份檔 (.txt)</button>
     <button class="btn" style="background-color: #9b59b6;" onclick="document.getElementById('import-file-input').click()">📥 匯入備份檔還原</button>
     <input type="file" id="import-file-input" style="display: none;" accept=".txt" onchange="importBackupFile(this)">
-    
-    <!-- 🏆 修正 1：換上純文字一鍵轉出複製按鈕 -->
-    <button class="btn" style="background-color: #e67e22;" onclick="copyDashboardTextToClipboard()">📋 複製本月全局資訊 (Checklist/行事曆/便條紙)</button>
+    <!-- 🏆 修正 1：依照要求，徹底移除複製本月全局資訊功能按鈕 -->
   </div>
 
   <div class="tabs">
@@ -410,18 +405,18 @@
     </div>
   </div>
 
-  <!-- 🏆 修正 2：多張可排序自由管理便條紙看板分頁 -->
+  <!-- 多張可排序自由管理便條紙看板分頁 -->
   <div id="tab-scratchpad" class="tab-content">
     <div class="card">
       <div class="card-title">
-        <span>📌 隨手便條紙分頁 (支援多卡片建立、內容一鍵複製複製)</span>
+        <span>📌 隨手便條紙分頁 (支援多卡片建立與上下自由移位)</span>
         <button class="btn btn-success" onclick="createNewScratchCard()">＋建立新便條卡</button>
       </div>
       <div class="scratchpad-grid" id="scratchpad-cards-container"></div>
     </div>
   </div>
 
-  <!-- 分頁三：配色自訂分頁 -->
+  <!-- 配色自訂分頁 -->
   <div id="tab-theme" class="tab-content">
     <div class="card">
       <div class="card-title"><span>🎨 儀表板主題配色客製化</span></div>
@@ -448,7 +443,6 @@
   let collapsedCategories = {};
   let isTemplateTableExpanded = false; 
   
-  // 🏆 修正 2：改為陣列管理多張便條紙
   let scratchpadCardsArray = [
     { title: "工作備忘錄", content: "點擊標題或內文可以直接進行編輯..." }
   ];
@@ -507,6 +501,7 @@
     reader.readAsText(file); input.value = "";
   }
 
+  // 🏆 核心相容修正：確保每次寫入與存取都精準維護原先舊有 dashboard_state 全局不漏
   function saveToLocalStorage() {
     localStorage.setItem('dashboard_categories', JSON.stringify(categories));
     localStorage.setItem('dashboard_subtabs', JSON.stringify(subTabs));
@@ -531,9 +526,14 @@
 
     if (cachedState) {
       state = JSON.parse(cachedState);
+      // 🏆 修正 2：如果老舊快取不含基礎架構，全面自動向下補齊相容，絕不覆蓋舊的 events 日程！
       if (!state.checklistData) state.checklistData = {};
       if (!state.events) state.events = {};
-      if (!state.achievementItems) state.achievementItems = {}; 
+      if (!state.importantItems) state.importantItems = {};
+      if (!state.memoItems) state.memoItems = {};
+      if (!state.sharedItems) state.sharedItems = {};
+      if (!state.achievementItems) state.achievementItems = {};
+      if (!state.errorItems) state.errorItems = {};
     } else {
       const initKey = '2026-07';
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
@@ -547,86 +547,6 @@
     }
   }
 
-  /* ================== 🏆 修正 1：純文字全局聯動打包複製模組核心 ================== */
-  function copyDashboardTextToClipboard() {
-    let out = `【${state.currentMonth} 工作儀表板 全局報告】\n`;
-    out += `產生時間: ${new Date().toLocaleString()}\n`;
-    out += `========================================\n\n`;
-
-    // 1. 打包 Checklist
-    out += `一、工作項目 Checklist 進度總覽:\n`;
-    const curMonthChecklist = state.checklistData[state.currentMonth] || {};
-    subTabs.forEach(tabName => {
-      out += `  [頁籤分頁: ${tabName}]\n`;
-      const tabItems = curMonthChecklist[tabName] || [];
-      categories.forEach(cat => {
-        const matched = tabItems.filter(i => i.category === cat);
-        if(matched.length > 0) {
-          out += `    ● 分類: ${cat}\n`;
-          matched.forEach((item, idx) => {
-            const status = item.completed ? "【已完成】" : "【進行中】";
-            out += `      ${idx + 1}. ${status} ${item.text}\n`;
-            if(item.detail) out += `         細項格子: ${item.detail}\n`;
-            if(item.notice) out += `         注意事項: ${item.notice}\n`;
-            if(item.note)   out += `         備註事項: ${item.note}\n`;
-          });
-        }
-      });
-    });
-    out += `\n========================================\n\n`;
-
-    // 2. 打包行事曆
-    out += `二、工作行事曆與各類特殊事項:\n`;
-    const evts = state.events[state.currentMonth] || {};
-    let dayCount = 0;
-    for(let d=1; d<=31; d++) {
-      if(evts[d] && evts[d].length > 0) {
-        dayCount++;
-        out += `  ● ${state.currentMonth}-${d.toString().padStart(2,'0')} 號日程:\n`;
-        evts[d].forEach((e, i) => {
-          const status = e.completed ? "[已打勾完成]" : "[未完成]";
-          out += `    ${i+1}. ${status} ${e.text.replace(/\n/g, ' ')}\n`;
-        });
-      }
-    }
-    if(dayCount === 0) out += `  (本月行事曆尚無安排特定行程)\n`;
-
-    const appendSidebar = (label, dataObj) => {
-      const items = dataObj[state.currentMonth] || [];
-      if(items.length > 0) {
-        out += `\n  [${label}列表]:\n`;
-        items.forEach((item, index) => {
-          const status = item.completed !== undefined ? (item.completed ? "【已結案】" : "【未結案】") : "";
-          out += `    ${index+1}. ${item.date} | ${status} ${item.text}\n`;
-        });
-      }
-    };
-    appendSidebar("⭐ 本月重要事項", state.importantItems);
-    appendSidebar("📝 備忘錄", state.memoItems);
-    appendSidebar("🏆 成就與感悟", state.achievementItems);
-    appendSidebar("❌ 錯誤事項/待檢討改善", state.errorItems);
-    out += `\n========================================\n\n`;
-
-    // 3. 打包隨手便條紙
-    out += `三、自定義隨手便條紙看板:\n`;
-    if(scratchpadCardsArray.length === 0) {
-      out += `  (目前無便條紙儲存內容)\n`;
-    } else {
-      scratchpadCardsArray.forEach((card, i) => {
-        out += `  [卡片 ${i+1}] 💡 標題: ${card.title}\n`;
-        out += `  📝 內容說明:\n${card.content}\n`;
-        out += `  ----------------------------------\n`;
-      });
-    }
-
-    navigator.clipboard.writeText(out).then(() => {
-      alert("🚀 全局文字資料已成功完美封裝複製至剪貼簿！可直接去LINE或郵件貼上給其他人使用。");
-    }).catch(err => {
-      alert("複製失敗，瀏覽器拒絕存取，請手動複製。");
-    });
-  }
-
-  /* ================== 🏆 修正 2：多卡片自由便條紙管理函數 ================== */
   function createNewScratchCard() {
     scratchpadCardsArray.push({ title: "新便條小標題", content: "在此填寫便條具體內容..." });
     renderScratchpadCards();
@@ -712,6 +632,7 @@
     return null;
   }
 
+  // 彈性切換大分頁
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -783,7 +704,7 @@
     });
   }
 
-  /* ================== 🏷️ Checklist ================== */
+  /* ================== 🏷️ Checklist 明細 ================== */
   function toggleCategoryCollapse(catName) { collapsedCategories[catName] = !collapsedCategories[catName]; renderChecklist(); }
   function insertChecklistItemInline(realIndex) {
     const quickText = prompt("請在此項目下方插入新的工作項目內容："); if (!quickText || quickText.trim() === '') return;
@@ -880,7 +801,7 @@
     renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage();
   }
 
-  /* ================== 右側資訊欄 ================== */
+  /* ================== 右側資訊欄資訊 ================== */
   function renderImportantItems() {
     const container = document.getElementById('important-items-container'); container.innerHTML = '';
     if (!state.importantItems[state.currentMonth]) state.importantItems[state.currentMonth] = [];
@@ -990,16 +911,17 @@
     clearBatchPool(false); renderCalendar(); saveToLocalStorage(); alert(`🚀 成功將項目大量整批挪動至 ${dayNum} 號！`);
   }
 
-  /* ================== 📅 行事曆、同天內上下排序與編輯功能核心邏輯 ================== */
+  /* ================== 📅 行事曆高流暢與單擊/雙擊完全修復模組 ================== */
   let draggedItem = null; let sourceDay = null;
 
-  // 🏆 修正 3：重新校正單擊標籤的完成狀態
+  // 🏆 修正 3：滑鼠單擊打勾完成/取消
   function toggleEventCompleted(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
     renderCalendar(); saveToLocalStorage();
   }
 
+  // 🏆 修正 2：滑鼠雙擊編輯
   function editDayEvent(day, idx) {
     if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
     const targetObj = state.events[state.currentMonth][day][idx];
@@ -1024,12 +946,12 @@
     renderCalendar(); saveToLocalStorage();
   }
 
-  // 🏆 修正 4：為固定定位資源籃綁定完全暢通的外部 Drag-and-Drop 核心事件
-  const pBox = document.getElementById('batch-drop-pool');
-  pBox.ondragover = (e) => { e.preventDefault(); pBox.classList.add('drag-over-active'); };
-  pBox.ondragleave = () => { pBox.classList.remove('drag-over-active'); };
-  pBox.ondrop = (e) => {
-    e.preventDefault(); pBox.classList.remove('drag-over-active'); 
+  // 🏆 修正 4：懸浮箱外部全暢通 Drag OVER 與 DROP 機制
+  const boxArea = document.getElementById('batch-drop-pool');
+  boxArea.ondragover = (e) => { e.preventDefault(); boxArea.classList.add('drag-over-active'); };
+  boxArea.ondragleave = () => { boxArea.classList.remove('drag-over-active'); };
+  boxArea.ondrop = (e) => {
+    e.preventDefault(); boxArea.classList.remove('drag-over-active'); 
     if (draggedItem !== null && sourceDay !== null) {
       const extractedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
       if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
@@ -1091,6 +1013,7 @@
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
 
+        // 🌟 核心修正點：完美隔離冒泡事件，保證單擊、雙擊、與拖曳不衝突
         tag.onclick = (event) => { event.stopPropagation(); toggleEventCompleted(day, idx); };
         tag.ondblclick = (event) => { event.stopPropagation(); editDayEvent(day, idx); };
         
@@ -1128,7 +1051,7 @@
     }
   }
 
-  /* ================== ⚙️ 範本配置與自動排程區 ================== */
+  /* ================== ⚙️ 範本配置區 ================== */
   function updateTemplateCondition(index, field, value) {
     if (field === 'condition') {
       if (recurringEventsTemplate[index].workday !== '') recurringEventsTemplate[index].workday = value.trim();
@@ -1205,10 +1128,41 @@
     renderCalendar(); saveToLocalStorage(); alert('⚡ 智慧日程已完成追加！(已自動過濾週末放假日，遇假期項目已順延提前至最近工作天)');
   }
 
-  function saveHeaderData() {
-    headerData.title = document.getElementById('editable-title').innerText.trim();
-    saveToLocalStorage();
+  /* ================== 多張可排序便條紙卡片渲染器 ================== */
+  function updateCardData(idx, field, val) { scratchpadCardsArray[idx][field] = val; saveToLocalStorage(); }
+  function deleteScratchCard(idx) {
+    if(confirm("確定要刪除這張隨手便條紙卡片嗎？")) { scratchpadCardsArray.splice(idx, 1); renderScratchpadCards(); saveToLocalStorage(); }
   }
+  function moveCardOrder(idx, direction) {
+    if(direction === 'up' && idx > 0) {
+      let temp = scratchpadCardsArray[idx]; scratchpadCardsArray[idx] = scratchpadCardsArray[idx-1]; scratchpadCardsArray[idx-1] = temp;
+    } else if(direction === 'down' && idx < scratchpadCardsArray.length - 1) {
+      let temp = scratchpadCardsArray[idx]; scratchpadCardsArray[idx] = scratchpadCardsArray[idx+1]; scratchpadCardsArray[idx+1] = temp;
+    }
+    renderScratchpadCards(); saveToLocalStorage();
+  }
+  function renderScratchpadCards() {
+    const container = document.getElementById('scratchpad-cards-container'); container.innerHTML = '';
+    if(scratchpadCardsArray.length === 0) {
+      container.innerHTML = `<div style="color:#999; font-style:italic; padding: 20px;">目前空空如也，點擊上方按鈕開始新增便條卡片吧！</div>`; return;
+    }
+    scratchpadCardsArray.forEach((card, idx) => {
+      const div = document.createElement('div'); div.className = 'scratchpad-card';
+      div.innerHTML = `
+        <div class="scratchpad-card-header">
+          <input type="text" class="scratchpad-card-title" value="${card.title}" onchange="updateCardData(${idx}, 'title', this.value)">
+          <div class="scratchpad-ctrls">
+            <span class="scratchpad-ctrl-btn" onclick="moveCardOrder(${idx}, 'up')" title="前移">◀</span>
+            <span class="scratchpad-ctrl-btn" onclick="moveCardOrder(${idx}, 'down')" title="後移">▶</span>
+            <span class="scratchpad-ctrl-btn" onclick="deleteScratchCard(${idx})" style="color:#e74c3c;" title="刪除">×</span>
+          </div>
+        </div>
+        <textarea class="scratchpad-card-body" onchange="updateCardData(${idx}, 'content', this.value)">${card.content}</textarea>`;
+      container.appendChild(div);
+    });
+  }
+
+  function saveHeaderData() { headerData.title = document.getElementById('editable-title').innerText.trim(); saveToLocalStorage(); }
 
   window.onload = function() {
     loadFromLocalStorage(); generateMonthOptions(); renderCategoriesManager(); globalSwitchMonth();
