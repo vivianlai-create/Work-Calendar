@@ -45,7 +45,7 @@
     .tab-btn.active { background-color: var(--primary-color); color: white; box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3); }
 
     .sub-tabs-container { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background-color: #f0f0f0; padding: 10px; border-radius: 8px; flex-wrap: wrap; }
-    .sub-tab-btn { padding: 6px 15px; font-size: 14px; border: 1px solid #ccc; background-color: #fff; color: #333; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none; }
+    .sub-tab-btn { padding: 6px 15px; font-size: 14px; border: 1px solid #ccc; background-color: #fff; color: #333; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none; -webkit-user-select: none; }
     .sub-tab-btn.active { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: bold; }
     .sub-tab-btn.drag-over { border: 2px dashed var(--primary-color); background-color: #e3f2fd; }
     .delete-subtab { color: #ff4d4d; font-weight: bold; cursor: pointer; margin-left: 4px; }
@@ -63,7 +63,7 @@
     .sync-bar { display: flex; align-items: center; gap: 10px; background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; flex-wrap: wrap; }
 
     .category-section { margin-bottom: 25px; }
-    .category-title { font-size: 15px; font-weight: bold; color: #555; background-color: #eaeaea; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+    .category-title { font-size: 15px; font-weight: bold; color: #555; background-color: #eaeaea; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; cursor: pointer; user-select: none; -webkit-user-select: none; display: flex; justify-content: space-between; align-items: center; }
     .category-title:hover { background-color: #dfdfdf; }
     .category-title.drag-over { border: 2px dashed var(--primary-color); background-color: #e3f2fd; }
     .category-items-box { display: block; }
@@ -109,7 +109,7 @@
       table-layout: fixed;
       width: 100%;
     }
-    .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+    .calendar-day-header { text-align: center; font-weight: bold; background-color: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; user-select: none; -webkit-user-select: none; }
     
     .calendar-day { 
       min-height: 115px; 
@@ -132,6 +132,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 5px;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .day-number { font-weight: bold; font-size: 12px; color: #666; }
     
@@ -153,17 +155,18 @@
     .today-tag { position: absolute; top: 4px; right: 28px; background-color: #f1c40f; color: #2c3e50; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
 
     .event-tag {
-      font-size: 11px; padding: 3px 4px; border-radius: 3px; margin-bottom: 3px; white-space: pre-wrap; word-break: break-all; cursor: grab; user-select: none; font-weight: 500; transition: opacity 0.2s, text-decoration 0.2s;
+      font-size: 11px; padding: 3px 4px; border-radius: 3px; margin-bottom: 3px; white-space: pre-wrap; word-break: break-all; cursor: grab; user-select: none; -webkit-user-select: none; font-weight: 500; transition: opacity 0.2s, text-decoration 0.2s;
       display: flex; justify-content: space-between; align-items: center;
     }
     .event-tag:active { cursor: grabbing; }
     .event-tag.completed { text-decoration: line-through !important; opacity: 0.45 !important; }
     .event-tag.drag-enter-active { border-top: 2px solid #ff9800; }
 
-    .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; overflow: hidden; text-overflow: ellipsis; }
+    .holiday-tag { background-color: #fce4d6; color: #c00000; font-size: 10px; padding: 1px 4px; border-radius: 3px; font-weight: bold; border-left: 3px solid #c00000; margin-bottom: 3px; cursor: default; overflow: hidden; text-overflow: ellipsis; user-select: none; -webkit-user-select: none; }
     
     .batch-box { 
       position: fixed; bottom: 20px; right: 20px; width: 320px; z-index: 1000; background-color: #f4ecf7; border: 2px dashed #9b59b6; border-radius: 8px; padding: 12px; margin-top: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: transform 0.2s, background-color 0.2s;
+      user-select: none; -webkit-user-select: none;
     }
     .batch-box.drag-over-active { transform: scale(1.03); background-color: #ebdef0; box-shadow: 0 4px 20px rgba(155, 89, 182, 0.4); border: 2px dashed #8e44ad; }
     .batch-item { display: inline-flex; align-items: center; background: #fff; border: 1px solid #9b59b6; padding: 2px 8px; border-radius: 4px; font-size: 12px; gap: 6px; margin: 3px; }
@@ -220,6 +223,7 @@
       padding-bottom: 4px;
       cursor: move;
       user-select: none;
+      -webkit-user-select: none;
       background-color: rgba(0,0,0,0.06); 
       margin: -12px -12px 0 -12px;
       padding: 8px 12px;
@@ -231,7 +235,7 @@
       font-size: 14px;
       border: none;
       background: transparent;
-      width: 55%;
+      width: 45%;
       color: inherit; 
     }
     .memo-card-title-input:focus {
@@ -241,8 +245,8 @@
     .memo-header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
-      flex-shrink: 0; /* 🚀 防止控制項區域被寬度壓縮擠掉 */
+      gap: 8px;
+      flex-shrink: 0; 
     }
     .memo-color-wrapper {
       position: relative;
@@ -250,6 +254,8 @@
       align-items: center;
       cursor: pointer;
       font-size: 14px;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .memo-color-input {
       position: absolute;
@@ -259,7 +265,6 @@
       cursor: pointer;
     }
     
-    /* 🚀 強制刪除按鈕顯現，設定固定大小並防止被壓縮 */
     .memo-card-delete-btn {
       color: #ff4d4d !important;
       font-weight: bold !important;
@@ -277,6 +282,8 @@
       flex-shrink: 0 !important;
       opacity: 1 !important;
       visibility: visible !important;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .memo-card-content {
       border: none;
@@ -292,6 +299,30 @@
     .memo-card-content:focus {
       outline: none;
       background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* 區塊折疊專用過渡動畫與樣式 */
+    .foldable-content {
+      transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+      overflow: hidden;
+      max-height: 500px;
+      opacity: 1;
+    }
+    .foldable-content.collapsed {
+      max-height: 0 !important;
+      opacity: 0 !important;
+      margin: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border: none !important;
+    }
+    .toggle-fold-btn {
+      font-size: 13px;
+      color: var(--primary-color);
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      font-weight: normal;
     }
   </style>
 </head>
@@ -339,7 +370,7 @@
     </div>
 
     <div class="card" style="border: 2px solid #4a90e2; background-color: #f4f9ff;">
-      <div class="card-title" style="color: #2b579a;"><span id="yearly-tracker-title">📊 頁籤年度工作項目完成狀態 (2026年 1-12 月全局追蹤)</span></div>
+      <div class="card-title" style="color: #2b579a;"><span id="yearly-tracker-title">📊 頁籤年度工作項目完成狀態 (1-12 月全局追蹤)</span></div>
       <div style="overflow-x: auto;">
         <table class="yearly-table">
           <thead>
@@ -355,43 +386,53 @@
     </div>
 
     <div class="card">
-      <div class="card-title"><span>🚀 建立新工作項目</span></div>
-      <div class="mega-add-box" style="margin-top: 0;">
-        <form onsubmit="addChecklistItem(event)">
-          <div class="mega-add-grid">
-            <div class="mega-field">
-              <label>🏷️ 選擇分類</label>
-              <select id="new-item-category"></select>
+      <div class="card-title">
+        <span>🚀 建立新工作項目</span>
+        <span class="toggle-fold-btn" onclick="toggleSectionFold('fold-new-item', this)">[▲ 收縮]</span>
+      </div>
+      <div id="fold-new-item" class="foldable-content">
+        <div class="mega-add-box" style="margin-top: 0; margin-bottom: 0;">
+          <form onsubmit="addChecklistItem(event)">
+            <div class="mega-add-grid">
+              <div class="mega-field">
+                <label>🏷️ 選擇分類</label>
+                <select id="new-item-category"></select>
+              </div>
+              <div class="mega-field">
+                <label>📌 工作項目名稱</label>
+                <input type="text" id="new-item-input" required>
+              </div>
+              <div class="mega-field">
+                <label>📋 細項格子</label>
+                <input type="text" id="new-item-detail">
+              </div>
+              <div class="mega-field">
+                <label>⚠️ 注意事項 (支援回車換行)</label>
+                <input type="text" id="new-item-notice">
+              </div>
+              <div class="mega-field">
+                <label>📝 備註事項</label>
+                <input type="text" id="new-item-note">
+              </div>
             </div>
-            <div class="mega-field">
-              <label>📌 工作項目名稱</label>
-              <input type="text" id="new-item-input" required>
-            </div>
-            <div class="mega-field">
-              <label>📋 細項格子</label>
-              <input type="text" id="new-item-detail">
-            </div>
-            <div class="mega-field">
-              <label>⚠️ 注意事項 (支援回車換行)</label>
-              <input type="text" id="new-item-notice">
-            </div>
-            <div class="mega-field">
-              <label>📝 備註事項</label>
-              <input type="text" id="new-item-note">
-            </div>
-          </div>
-          <button type="submit" class="btn" style="width: 100%;">🚀 確認建立此新項目</button>
-        </form>
+            <button type="submit" class="btn" style="width: 100%;">🚀 確認建立此新項目</button>
+          </form>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title"><span>🏷️ 編輯工作項目分類 <small style="font-size:12px; color:#888; font-weight:normal;">(💡 拖曳分類可更改顯示順序，點擊 ✏️ 可修改分類名稱)</small></span></div>
-      <div id="categories-manage-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
-      <form class="add-item-form" onsubmit="addCustomCategory(event)">
-        <input type="text" id="new-category-input" required style="max-width: 300px;">
-        <button type="submit" class="btn btn-success">新增分類</button>
-      </form>
+      <div class="card-title">
+        <span>🏷️ 編輯工作項目分類 <small style="font-size:12px; color:#888; font-weight:normal;">(💡 拖曳分類可更改顯示順序，點擊 ✏️ 可修改分類名稱)</small></span>
+        <span class="toggle-fold-btn" onclick="toggleSectionFold('fold-edit-cat', this)">[▲ 收縮]</span>
+      </div>
+      <div id="fold-edit-cat" class="foldable-content">
+        <div id="categories-manage-list" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px;"></div>
+        <form class="add-item-form" onsubmit="addCustomCategory(event)">
+          <input type="text" id="new-category-input" required style="max-width: 300px;">
+          <button type="submit" class="btn btn-success">新增分類</button>
+        </form>
+      </div>
     </div>
 
     <div class="card">
@@ -413,7 +454,7 @@
             <button class="btn" onclick="applyRecurringEvents()">⚡ 一鍵安排當月固定日程</button>
           </div>
           <div class="calendar-header">
-            <h3 id="calendar-month-title" style="margin: 0;">2026 年 07 月</h3>
+            <h3 id="calendar-month-title" style="margin: 0;">年份 月份</h3>
           </div>
           <div class="calendar-grid" id="calendar-grid"></div>
         </div>
@@ -568,8 +609,10 @@
 <script>
   Object.freeze(document.title); 
 
-  const REAL_CURRENT_YEAR = 2026;
-  const REAL_CURRENT_MONTH = 7;
+  // 動態獲取系統當前年份與月份，防止任何跨年度斷層
+  const SYSTEM_DATE = new Date();
+  const REAL_CURRENT_YEAR = SYSTEM_DATE.getFullYear();
+  const REAL_CURRENT_MONTH = SYSTEM_DATE.getMonth() + 1;
   
   let categories = ['核心專案', '行政/例行', '跨部門協作'];
   let subTabs = ['主頁面'];
@@ -581,21 +624,27 @@
     { id: 'memo-1', title: '會議大綱', content: '與團隊確認串接細節。', x: 50, y: 50, w: 260, h: 180, bgColor: '#fffef2', textColor: '#5d4037' }
   ];
 
-  // 預設 2026 節假日
-  let TAIWAN_HOLIDAYS = {
-    "2026-01": { 1: "元旦" },
-    "2026-02": { 14: "春節連假", 15: "春節連假", 16: "除夕", 17: "春節", 18: "春節", 19: "春節", 20: "春節(補假)", 21: "春節連假", 22: "春節連假", 27: "228連假(補假)", 28: "和平紀念日" },
-    "2026-03": { 1: "228連假" },
-    "2026-04": { 3: "兒童節(補假)", 4: "兒童節", 5: "清明節", 6: "清明節(補假)" },
-    "2026-05": { 1: "勞動節", 2: "勞動連假", 3: "勞動連假" },
-    "2026-06": { 19: "端午節", 20: "端午連假", 21: "端午連假" },
-    "2026-09": { 25: "中秋節", 26: "中秋連假", 27: "中秋連假", 28: "教師節" },
-    "2026-10": { 9: "國慶連假(補假)", 10: "雙十國慶", 11: "國慶連假", 24: "光復連假", 25: "光復節", 26: "國慶連假(補假)" },
-    "2026-12": { 25: "行憲紀念日", 26: "聖誕連假", 27: "聖誕連假" }
-  };
+  // 節假日預設資料，年份隨動態計算載入
+  let TAIWAN_HOLIDAYS = {};
+  function initializeDefaultHolidays(year) {
+    TAIWAN_HOLIDAYS = {
+      [`${year}-01`]: { 1: "元旦" },
+      [`${year}-02`]: { 14: "春節連假", 15: "春節連假", 16: "除夕", 17: "春節", 18: "春節", 19: "春節", 20: "春節(補假)", 21: "春節連假", 22: "春節連假", 27: "228連假(補假)", 28: "和平紀念日" },
+      [`${year}-03`]: { 1: "228連假" },
+      [`${year}-04`]: { 3: "兒童節(補假)", 4: "兒童節", 5: "清明節", 6: "清明節(補假)" },
+      [`${year}-05`]: { 1: "勞動節", 2: "勞動連假", 3: "勞動連假" },
+      [`${year}-06`]: { 19: "端午節", 20: "端午連假", 21: "端午連假" },
+      [`${year}-09`]: { 25: "中秋節", 26: "中秋連假", 27: "中秋連假", 28: "教師節" },
+      [`${year}-10`]: { 9: "國慶連假(補假)", 10: "雙十國慶", 11: "國慶連假", 24: "光復連假", 25: "光復節", 26: "國慶連假(補假)" },
+      [`${year}-12`]: { 25: "行憲紀念日", 26: "聖誕連假", 27: "聖誕連假" }
+    };
+  }
 
+  // 預設儀表板時間，如果當前年份小於 2026，則自動拉回 2026-01 起始
+  const initialYear = REAL_CURRENT_YEAR >= 2026 ? REAL_CURRENT_YEAR : 2026;
+  const initialMonth = REAL_CURRENT_YEAR >= 2026 ? REAL_CURRENT_MONTH : 1;
   let state = {
-    currentMonth: '2026-07',
+    currentMonth: `${initialYear}-${initialMonth.toString().padStart(2, '0')}`,
     checklistData: {}, 
     events: {}, 
     importantItems: {},
@@ -617,6 +666,16 @@
   ];
 
   let headerData = { title: "工作儀表板 Ultimate Pro", desc: "" };
+
+  function toggleSectionFold(sectionId, btn) {
+    const el = document.getElementById(sectionId);
+    el.classList.toggle('collapsed');
+    if (el.classList.contains('collapsed')) {
+      btn.innerText = '[▼ 展開]';
+    } else {
+      btn.innerText = '[▲ 收縮]';
+    }
+  }
 
   async function fetchLatestTaiwanHolidays() {
     try {
@@ -674,14 +733,20 @@
             if (c.w === undefined) c.w = 260; if (c.h === undefined) c.h = 180;
             if (c.bgColor === undefined) c.bgColor = '#fffef2'; if (c.textColor === undefined) c.textColor = '#5d4037';
           });
-        } else if (decodedData.scratchpadContent) {
-          scratchpadCards = [{ id: 'memo-legacy', title: '匯入的舊便條', content: decodedData.scratchpadContent, x: 50, y: 50, w: 260, h: 180, bgColor: '#fffef2', textColor: '#5d4037' }];
         }
         
         if (decodedData.recurringEventsTemplate) {
           recurringEventsTemplate = decodedData.recurringEventsTemplate;
           recurringEventsTemplate.forEach(t => { if (t.daily === undefined) t.daily = false; });
         }
+        
+        // 如果匯入資料年份小於 2026，強制將當前選取月份拉回 2026-01
+        const [impYear] = state.currentMonth.split('-').map(Number);
+        if (impYear < 2026) {
+          state.currentMonth = "2026-01";
+        }
+
+        generateMonthOptions();
         globalSwitchMonth(); 
         renderScratchpadCards();
         alert("🎉 備份資料已 100% 成功匯入還原！");
@@ -717,11 +782,6 @@
         if (c.w === undefined) c.w = 260; if (c.h === undefined) c.h = 180;
         if (c.bgColor === undefined) c.bgColor = '#fffef2'; if (c.textColor === undefined) c.textColor = '#5d4037';
       });
-    } else {
-      const legacyScratchpad = localStorage.getItem('dashboard_scratchpad');
-      if (legacyScratchpad) {
-        scratchpadCards = [{ id: 'memo-legacy', title: '匯入的舊便條', content: legacyScratchpad, x: 50, y: 50, w: 260, h: 180, bgColor: '#fffef2', textColor: '#5d4037' }];
-      }
     }
 
     if (cachedState) {
@@ -733,8 +793,14 @@
       if (!state.sharedItems) state.sharedItems = {};
       if (!state.achievementItems) state.achievementItems = {}; 
       if (!state.errorItems) state.errorItems = {}; 
+
+      // 載入緩存後防呆：若年份小於 2026，強制修正為 2026-01
+      const [cachedYear] = state.currentMonth.split('-').map(Number);
+      if (cachedYear < 2026) {
+        state.currentMonth = "2026-01";
+      }
     } else {
-      const initKey = '2026-07';
+      const initKey = `${initialYear}-${initialMonth.toString().padStart(2, '0')}`;
       state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
     }
     if (cachedRecurring) {
@@ -762,22 +828,42 @@
   }
   function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
+  // 🧠 智慧選單產生器：嚴格禁止 2026 以前，且年底自動往後展延 12 個月以便規劃隔年
   function generateMonthOptions() {
     const select = document.getElementById('month-select'); select.innerHTML = '';
-    let startYear = 2026; let endYear = 2026;
-    if (REAL_CURRENT_MONTH >= 11) { endYear = 2027; }
-    let dateCursor = new Date(startYear, 0, 1); const endDate = new Date(endYear, 11, 1);
+    
+    const [selectedYear] = state.currentMonth.split('-').map(Number);
+    
+    // 起始年份絕對鎖定在 2026
+    const startYear = 2026;
+    
+    // 終點年份：以「系統當前年份」與「選中年份」的最大值，再往後加 1 年（確保年底可以規律規劃隔年整年）
+    const referenceYear = Math.max(REAL_CURRENT_YEAR, selectedYear);
+    const endYear = referenceYear + 1;
+    
+    let dateCursor = new Date(startYear, 0, 1);
+    const endDate = new Date(endYear, 11, 1);
+    
     while (dateCursor <= endDate) {
-      let y = dateCursor.getFullYear(); let m = dateCursor.getMonth() + 1;
-      let mStr = m.toString().padStart(2, '0'); let val = `${y}-${mStr}`;
-      const opt = document.createElement('option'); opt.value = val; opt.textContent = `${y} 年 ${mStr} 月`;
-      select.appendChild(opt); dateCursor.setMonth(dateCursor.getMonth() + 1);
+      let y = dateCursor.getFullYear();
+      let m = dateCursor.getMonth() + 1;
+      let mStr = m.toString().padStart(2, '0');
+      let val = `${y}-${mStr}`;
+      
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = `${y} 年 ${mStr} 月`;
+      select.appendChild(opt);
+      
+      dateCursor.setMonth(dateCursor.getMonth() + 1);
     }
     select.value = state.currentMonth;
   }
 
   function jumpToCurrentMonth() {
-    const target = `${REAL_CURRENT_YEAR}-${REAL_CURRENT_MONTH.toString().padStart(2, '0')}`;
+    const target = REAL_CURRENT_YEAR >= 2026 
+      ? `${REAL_CURRENT_YEAR}-${REAL_CURRENT_MONTH.toString().padStart(2, '0')}`
+      : "2026-01";
     document.getElementById('month-select').value = target; globalSwitchMonth();
   }
 
@@ -813,6 +899,9 @@
     document.getElementById('new-achievement-date').value = defaultDateVal; 
     document.getElementById('new-error-date').value = defaultDateVal;
     
+    const [year] = state.currentMonth.split('-').map(Number);
+    initializeDefaultHolidays(year);
+
     batchPoolArray = []; 
     renderBatchPool(); 
     renderSubTabs(); 
@@ -859,8 +948,9 @@
       btn.onclick = () => switchSubTab(name); 
       container.appendChild(btn);
     });
+    const [year] = state.currentMonth.split('-').map(Number);
     document.getElementById('checklist-card-title-text').innerText = `【${currentSubTab}】工作項目 Checklist`;
-    document.getElementById('yearly-tracker-title').innerText = `📊 【${currentSubTab}】分頁年度工作項目完成狀態 (2026年 1-12 月全局追蹤)`;
+    document.getElementById('yearly-tracker-title').innerText = `📊 【${currentSubTab}】分頁年度工作項目完成狀態 (${year}年 1-12 月全局追蹤)`;
     renderYearlyProgressTracker();
   }
 
@@ -935,11 +1025,12 @@
 
   function renderYearlyProgressTracker() {
     const tbody = document.getElementById('yearly-tracker-tbody');
+    const [year] = state.currentMonth.split('-').map(Number);
     const rowsHtml = [];
     categories.forEach(cat => {
       let trHtml = `<td style="font-weight: bold; text-align: left; background-color: #fafafa;">${cat}</td>`;
       for (let m = 1; m <= 12; m++) {
-        let mStr = m.toString().padStart(2, '0'); let monthKey = `2026-${mStr}`;
+        let mStr = m.toString().padStart(2, '0'); let monthKey = `${year}-${mStr}`;
         let monthData = state.checklistData[monthKey]; let tabItems = (monthData && monthData[currentSubTab]) ? monthData[currentSubTab] : [];
         let catItems = tabItems.filter(item => item.category === cat);
         if (catItems.length === 0) { trHtml += `<td><span class="yearly-cell-badge badge-none">-</span></td>`; } 
@@ -970,9 +1061,8 @@
     categories.forEach((cat, index) => {
       const span = document.createElement('span'); 
       span.draggable = true;
-      span.style.cssText = 'background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: grab;';
+      span.style.cssText = 'background: #f0f0f0; border: 1px solid #ccc; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: grab; user-select: none; -webkit-user-select: none;';
       
-      // 🚀 【第 1 點】新增分類編輯按鈕 (✏️) 支援分類名稱修改
       span.innerHTML = `
         <span>☰ ${cat}</span>
         <span style="color:#f39c12; cursor:pointer; font-weight:bold; margin-left:4px;" onclick="event.stopPropagation(); renameCategory(${index}, '${cat}')">✏️</span>
@@ -1000,7 +1090,6 @@
     });
   }
 
-  // 🚀 【第 1 點】修改工作項目分類名稱，同步關聯所有工作數據
   function renameCategory(index, oldName) {
     const newName = prompt(`請輸入分類 [${oldName}] 的新名稱：`, oldName);
     if (!newName) return;
@@ -1009,7 +1098,6 @@
     if (categories.includes(trimmed)) { alert("此分類名稱已存在！"); return; }
 
     categories[index] = trimmed;
-    // 全域同步更新關聯的所有資料
     for (let m in state.checklistData) {
       for (let t in state.checklistData[m]) {
         if (Array.isArray(state.checklistData[m][t])) {
@@ -1133,7 +1221,16 @@
     let lastKey = `${year}-${(month - 2 < 0 ? 12 : month - 1).toString().padStart(2, '0')}`; if (month - 2 < 0) lastKey = `${year - 1}-12`;
     if (!state.checklistData[lastKey]) state.checklistData[lastKey] = {};
     const lastItems = state.checklistData[lastKey][currentSubTab] || [];
-    lastItems.forEach(item => { state.checklistData[state.currentMonth][currentSubTab].push({ text: item.text, category: item.category, completed: false, detail: item.detail || '', notice: item.notice || '', note: item.note || '' }); });
+    lastItems.forEach(item => { 
+      state.checklistData[state.currentMonth][currentSubTab].push({ 
+        text: item.text, 
+        category: item.category, 
+        completed: false, 
+        detail: item.detail || '', 
+        notice: item.notice || '', 
+        note: '' 
+      }); 
+    });
     renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage();
   }
 
@@ -1226,9 +1323,10 @@
     batchPoolArray.forEach((item, idx) => {
       listDiv.innerHTML += `
         <div class="batch-item" style="background:${item.color}; color:${item.fontColor || '#1e88e5'}; white-space: pre-wrap;">
-          <span>${item.text}</span>
+          <span class="batch-item-text"></span>
           <span style="color:#e74c3c; font-weight:bold; cursor:pointer; margin-left:5px;" onclick="removeItemFromPool(${idx})">×</span>
         </div>`;
+      listDiv.querySelectorAll('.batch-item-text')[idx].textContent = item.text;
     });
   }
   function removeItemFromPool(idx) { batchPoolArray.splice(idx, 1); renderBatchPool(); }
@@ -1279,7 +1377,7 @@
   function copySingleDayEventsToClipboard(day) {
     const dayEvents = state.events[state.currentMonth]?.[day] || [];
     if (dayEvents.length === 0) {
-      alert(`⚠️ ${day}號 目前沒有安排 any 工作日程喔！`);
+      alert(`⚠️ ${day}號 目前沒有安排任何工作日程喔！`);
       return;
     }
 
@@ -1375,12 +1473,21 @@
           <button class="copy-day-btn" onclick="event.stopPropagation(); copySingleDayEventsToClipboard(${day})" title="複製當日日程回報格式文字">📋</button>
         </div>`;
       
-      if (holidayConfig[day]) dayDiv.innerHTML += `<div class="holiday-tag">🏮 ${holidayConfig[day]}</div>`;
+      if (holidayConfig[day]) {
+        const hTag = document.createElement('div');
+        hTag.className = 'holiday-tag';
+        hTag.textContent = `🏮 ${holidayConfig[day]}`;
+        dayDiv.appendChild(hTag);
+      }
 
       const evts = state.events[state.currentMonth][day] || [];
       evts.forEach((evtObj, idx) => {
         const tag = document.createElement('div'); tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; tag.draggable = true;
-        tag.innerHTML = `<span>${idx + 1}. ${evtObj.text}</span>`;
+        
+        const txtSpan = document.createElement('span');
+        txtSpan.textContent = `${idx + 1}. ${evtObj.text}`;
+        tag.appendChild(txtSpan);
+
         tag.style.backgroundColor = evtObj.color || '#e3f2fd'; tag.style.color = evtObj.fontColor || '#1e88e5';
         if (evtObj.fontColor === '#ffffff') tag.style.borderLeft = '3px solid rgba(0,0,0,0.2)';
         else tag.style.borderLeft = `3px solid ${evtObj.fontColor || '#1e88e5'}`;
@@ -1557,7 +1664,7 @@
       const textColor = getContrastColor(bgColor);
       cardEl.style.backgroundColor = bgColor;
       cardEl.style.color = textColor;
-      
+
       cardEl.innerHTML = `
         <div class="memo-card-header" onmousedown="startCardDrag(event, '${card.id}')">
           <input type="text" class="memo-card-title-input" value="${card.title}" onchange="updateMemoCardTitle(${idx}, this.value)" placeholder="小標題...">
@@ -1566,7 +1673,6 @@
               🎨
               <input type="color" class="memo-color-input" value="${bgColor}" onchange="updateCardCustomColor(${idx}, this.value)">
             </div>
-            <!-- 🚀 【第 2 點】使用 fixed-size 控制與 flex-shrink，更換成不易被排擠之 ✖ 字符號確保永不隱藏 -->
             <button class="memo-card-delete-btn" onclick="deleteMemoCard(${idx})" title="刪除便貼紙">✖</button>
           </div>
         </div>
