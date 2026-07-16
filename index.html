@@ -187,10 +187,11 @@
     .badge-undone { background-color: #f8d7da; color: #721c24; }
     .badge-none { background-color: #e2e3e5; color: #383d41; }
 
+    /* 💥 桌面隨手貼的專屬看板，高度已放大調整 */
     .scratchpad-board {
       position: relative;
       width: 100%;
-      height: 650px;
+      height: 950px; /* 👈 高度已從 650px 升級調整為 950px，空間更大更寬敞 */
       background-color: #eaeaea;
       background-image: radial-gradient(#d3d3d3 15%, transparent 15%);
       background-size: 20px 20px;
@@ -339,12 +340,13 @@
     <button class="btn" style="background-color: #2ecc71;" onclick="exportBackupFile()">📤 下載資料備份檔 (.txt)</button>
     <button class="btn" style="background-color: #9b59b6;" onclick="document.getElementById('import-file-input').click()">📥 匯入備份檔還原</button>
     <input type="file" id="import-file-input" style="display: none;" accept=".txt" onchange="importBackupFile(this)">
-    <span id="sync-status" style="font-size: 13px; color: #555; margin-left: 10px;">(備份檔包含所有頁籤、行事曆日程與完全自訂便條紙尺寸位置)</span>
+    <span id="sync-status" style="font-size: 13px; color: #555; margin-left: 10px;">(備份檔包含所有頁籤、行事曆日程、年度目標與完全自訂便條紙尺寸位置)</span>
   </div>
 
   <div class="tabs">
     <button class="tab-btn active" id="btn-tab-checklist" onclick="switchTab('tab-checklist', this)">📝 工作項目 Checklist</button>
     <button class="btn tab-btn" id="btn-tab-calendar" onclick="switchTab('tab-calendar', this)">📅 工作行事曆</button>
+    <button class="btn tab-btn" id="btn-tab-yearly-goals" onclick="switchTab('tab-yearly-goals', this)">🎯 年度目標</button>
     <button class="btn tab-btn" id="btn-tab-scratchpad" onclick="switchTab('tab-scratchpad', this)">📌 隨手便條紙</button>
     <button class="btn tab-btn" id="btn-tab-theme" onclick="switchTab('tab-theme', this)">🎨 儀表板主題配色</button>
   </div>
@@ -580,6 +582,21 @@
     </div>
   </div>
 
+  <!-- 分頁：年度目標 -->
+  <div id="tab-yearly-goals" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <span>🎯 年度目標與大局規劃 (隨打隨存、支援資料備份備忘)</span>
+      </div>
+      <div style="width: 100%;">
+        <textarea id="yearly-goals-textarea" 
+                  placeholder="在此處自由記載你的年度計畫、核心目標或臨時筆記資訊..." 
+                  style="width: 100%; height: 500px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; line-height: 1.6; resize: vertical; box-sizing: border-box;"
+                  oninput="saveYearlyGoals(this.value)"></textarea>
+      </div>
+    </div>
+  </div>
+
   <!-- 隨手便條紙看板區 -->
   <div id="tab-scratchpad" class="tab-content">
     <div class="card">
@@ -609,7 +626,7 @@
 <script>
   Object.freeze(document.title); 
 
-  // 動態獲取系統當前年份與月份，防止任何跨年度斷層
+  // 動態獲取系統當前年份與月份，防止 any 跨年度斷層
   const SYSTEM_DATE = new Date();
   const REAL_CURRENT_YEAR = SYSTEM_DATE.getFullYear();
   const REAL_CURRENT_MONTH = SYSTEM_DATE.getMonth() + 1;
@@ -651,7 +668,8 @@
     memoItems: {},
     sharedItems: {},
     achievementItems: {}, 
-    errorItems: {}
+    errorItems: {},
+    yearlyGoals: "" 
   };
 
   let batchPoolArray = [];
@@ -726,6 +744,7 @@
         if (!state.sharedItems) state.sharedItems = {};
         if (!state.achievementItems) state.achievementItems = {}; 
         if (!state.errorItems) state.errorItems = {}; 
+        if (state.yearlyGoals === undefined) state.yearlyGoals = ""; 
         
         if (decodedData.scratchpadCards) {
           scratchpadCards = decodedData.scratchpadCards;
@@ -749,6 +768,7 @@
         generateMonthOptions();
         globalSwitchMonth(); 
         renderScratchpadCards();
+        renderYearlyGoals(); 
         alert("🎉 備份資料已 100% 成功匯入還原！");
       } catch (err) { alert("❌ 匯入失敗！"); }
     };
@@ -793,6 +813,7 @@
       if (!state.sharedItems) state.sharedItems = {};
       if (!state.achievementItems) state.achievementItems = {}; 
       if (!state.errorItems) state.errorItems = {}; 
+      if (state.yearlyGoals === undefined) state.yearlyGoals = ""; 
 
       // 載入緩存後防呆：若年份小於 2026，強制修正為 2026-01
       const [cachedYear] = state.currentMonth.split('-').map(Number);
@@ -913,6 +934,7 @@
     renderAchievementItems(); 
     renderErrorItems(); 
     renderRecurringManager(); 
+    renderYearlyGoals(); 
     saveToLocalStorage();
   }
 
@@ -1377,7 +1399,7 @@
   function copySingleDayEventsToClipboard(day) {
     const dayEvents = state.events[state.currentMonth]?.[day] || [];
     if (dayEvents.length === 0) {
-      alert(`⚠️ ${day}號 目前沒有安排任何工作日程喔！`);
+      alert(`⚠️ ${day}號 目前沒有安排 any 工作日程喔！`);
       return;
     }
 
@@ -1422,6 +1444,17 @@
       }
     }
     renderCalendar(); saveToLocalStorage();
+  }
+
+  function saveYearlyGoals(value) {
+    state.yearlyGoals = value;
+    saveToLocalStorage();
+  }
+  function renderYearlyGoals() {
+    const txtArea = document.getElementById('yearly-goals-textarea');
+    if (txtArea) {
+      txtArea.value = state.yearlyGoals || "";
+    }
   }
 
   function renderCalendar() {
@@ -1917,6 +1950,7 @@
     renderCategoriesManager(); 
     globalSwitchMonth();
     renderScratchpadCards(); 
+    renderYearlyGoals(); 
     
     fetchLatestTaiwanHolidays();
   };
