@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工作儀表板</title>
+  <title>工作儀表板 Ultimate Pro</title>
   <style id="custom-theme-styles">
     :root {
       --primary-color: #4a90e2;
@@ -187,11 +187,10 @@
     .badge-undone { background-color: #f8d7da; color: #721c24; }
     .badge-none { background-color: #e2e3e5; color: #383d41; }
 
-    /* 💥 桌面隨手貼的專屬看板，高度已放大調整 */
     .scratchpad-board {
       position: relative;
       width: 100%;
-      height: 950px; /* 👈 高度已從 650px 升級調整為 950px，空間更大更寬敞 */
+      height: 950px;
       background-color: #eaeaea;
       background-image: radial-gradient(#d3d3d3 15%, transparent 15%);
       background-size: 20px 20px;
@@ -302,7 +301,6 @@
       background-color: rgba(255, 255, 255, 0.4);
     }
 
-    /* 區塊折疊專用過渡動畫與樣式 */
     .foldable-content {
       transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
       overflow: hidden;
@@ -624,9 +622,7 @@
 </div>
 
 <script>
-  Object.freeze(document.title); 
-
-  // 動態獲取系統當前年份與月份，防止 any 跨年度斷層
+  // 動態獲取系統當前年份與月份
   const SYSTEM_DATE = new Date();
   const REAL_CURRENT_YEAR = SYSTEM_DATE.getFullYear();
   const REAL_CURRENT_MONTH = SYSTEM_DATE.getMonth() + 1;
@@ -641,7 +637,6 @@
     { id: 'memo-1', title: '會議大綱', content: '與團隊確認串接細節。', x: 50, y: 50, w: 260, h: 180, bgColor: '#fffef2', textColor: '#5d4037' }
   ];
 
-  // 節假日預設資料，年份隨動態計算載入
   let TAIWAN_HOLIDAYS = {};
   function initializeDefaultHolidays(year) {
     TAIWAN_HOLIDAYS = {
@@ -657,7 +652,6 @@
     };
   }
 
-  // 預設儀表板時間，如果當前年份小於 2026，則自動拉回 2026-01 起始
   const initialYear = REAL_CURRENT_YEAR >= 2026 ? REAL_CURRENT_YEAR : 2026;
   const initialMonth = REAL_CURRENT_YEAR >= 2026 ? REAL_CURRENT_MONTH : 1;
   let state = {
@@ -759,7 +753,6 @@
           recurringEventsTemplate.forEach(t => { if (t.daily === undefined) t.daily = false; });
         }
         
-        // 如果匯入資料年份小於 2026，強制將當前選取月份拉回 2026-01
         const [impYear] = state.currentMonth.split('-').map(Number);
         if (impYear < 2026) {
           state.currentMonth = "2026-01";
@@ -815,7 +808,6 @@
       if (!state.errorItems) state.errorItems = {}; 
       if (state.yearlyGoals === undefined) state.yearlyGoals = ""; 
 
-      // 載入緩存後防呆：若年份小於 2026，強制修正為 2026-01
       const [cachedYear] = state.currentMonth.split('-').map(Number);
       if (cachedYear < 2026) {
         state.currentMonth = "2026-01";
@@ -849,16 +841,10 @@
   }
   function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
-  // 🧠 智慧選單產生器：嚴格禁止 2026 以前，且年底自動往後展延 12 個月以便規劃隔年
   function generateMonthOptions() {
     const select = document.getElementById('month-select'); select.innerHTML = '';
-    
     const [selectedYear] = state.currentMonth.split('-').map(Number);
-    
-    // 起始年份絕對鎖定在 2026
     const startYear = 2026;
-    
-    // 終點年份：以「系統當前年份」與「選中年份」的最大值，再往後加 1 年（確保年底可以規律規劃隔年整年）
     const referenceYear = Math.max(REAL_CURRENT_YEAR, selectedYear);
     const endYear = referenceYear + 1;
     
@@ -911,8 +897,62 @@
     else { wrapper.style.display = "none"; btn.innerText = "[▶ 展開列表]"; }
   }
 
+  // 🔄 自動順延過去未完成事項邏輯（保留歷史紀錄與原始建立日期）
+  function carryForwardIncompleteItems() {
+    const currentKey = state.currentMonth;
+    
+    const allMonths = Array.from(new Set([
+      ...Object.keys(state.memoItems || {}),
+      ...Object.keys(state.importantItems || {})
+    ])).sort();
+
+    const pastMonths = allMonths.filter(m => m < currentKey);
+    if (pastMonths.length === 0) return;
+
+    if (!state.memoItems[currentKey]) state.memoItems[currentKey] = [];
+    if (!state.importantItems[currentKey]) state.importantItems[currentKey] = [];
+
+    pastMonths.forEach(mKey => {
+      // 1. 舊月份未完成的「備忘錄事項」-> 複製順延至當前月份「備忘錄」（保留舊月份歷史檔）
+      if (state.memoItems[mKey] && state.memoItems[mKey].length > 0) {
+        state.memoItems[mKey].forEach(item => {
+          if (!item.completed) {
+            const isExist = state.memoItems[currentKey].some(e => e.text === item.text && e.date === item.date);
+            if (!isExist) {
+              state.memoItems[currentKey].push({
+                date: item.date, // 保留原先建立的日期
+                text: item.text,
+                completed: false
+              });
+            }
+          }
+        });
+      }
+
+      // 2. 舊月份未完成的「本月重要事項」-> 複製順延至當前月份「本月重要事項」（保留舊月份歷史檔）
+      if (state.importantItems[mKey] && state.importantItems[mKey].length > 0) {
+        state.importantItems[mKey].forEach(item => {
+          if (!item.completed) {
+            const isExist = state.importantItems[currentKey].some(e => e.text === item.text && e.date === item.date);
+            if (!isExist) {
+              state.importantItems[currentKey].push({
+                date: item.date, // 保留原先建立的日期
+                text: item.text,
+                completed: false
+              });
+            }
+          }
+        });
+      }
+    });
+  }
+
   function globalSwitchMonth() {
     state.currentMonth = document.getElementById('month-select').value;
+    
+    // ⚡ 在載入畫面前，先執行自動順延未完成事項邏輯
+    carryForwardIncompleteItems();
+
     const defaultDateVal = `${state.currentMonth}-01`;
     document.getElementById('new-important-date').value = defaultDateVal; 
     document.getElementById('new-memo-date').value = defaultDateVal; 
@@ -1399,7 +1439,7 @@
   function copySingleDayEventsToClipboard(day) {
     const dayEvents = state.events[state.currentMonth]?.[day] || [];
     if (dayEvents.length === 0) {
-      alert(`⚠️ ${day}號 目前沒有安排 any 工作日程喔！`);
+      alert(`⚠️ ${day}號 目前沒有安排任何工作日程喔！`);
       return;
     }
 
