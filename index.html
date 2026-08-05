@@ -363,6 +363,7 @@
       <button class="btn btn-success" style="padding: 4px 10px; font-size: 12px; margin-left: 10px;" onclick="addNewSubTab()">＋新增頁籤</button>
       
       <span style="margin-left: auto; display: inline-flex; gap: 6px;">
+        <button class="btn" style="background-color: #e67e22; padding: 4px 10px; font-size: 12px;" onclick="exportIncompleteTasksTXT()">📄 匯出未完成項目 (.txt)</button>
         <button class="btn" style="background-color: #34495e; padding: 4px 10px; font-size: 12px;" onclick="exportFullChecklistSOPTemplate()">📦 下載完整 SOP 範本檔 (.json)</button>
         <button class="btn" style="background-color: #8e44ad; padding: 4px 10px; font-size: 12px;" onclick="document.getElementById('import-checklist-input').click()">📥 導入完整標準工作項目</button>
         <input type="file" id="import-checklist-input" style="display: none;" accept=".json" onchange="importFullChecklistSOPTemplate(this)">
@@ -1864,6 +1865,69 @@
     saveToLocalStorage();
   }
 
+  /* ================== 📄 一鍵轉出未完成工作項目 (.txt) ================== */
+  function exportIncompleteTasksTXT() {
+    const currentMonth = state.currentMonth;
+    const monthData = state.checklistData[currentMonth] || {};
+    
+    let txtContent = `========================================\n`;
+    txtContent += `📋 未完成工作項目清單 (${currentMonth})\n`;
+    txtContent += `匯出時間：${new Date().toLocaleString('zh-TW')}\n`;
+    txtContent += `========================================\n\n`;
+
+    let totalIncomplete = 0;
+
+    // 走訪所有頁籤
+    subTabs.forEach(tabName => {
+      const items = monthData[tabName] || [];
+      const incompleteItems = items.filter(item => !item.completed);
+
+      if (incompleteItems.length > 0) {
+        txtContent += `【 📁 頁籤：${tabName} 】\n`;
+        txtContent += `----------------------------------------\n`;
+
+        // 按分類整理
+        categories.forEach(cat => {
+          const catItems = incompleteItems.filter(item => item.category === cat);
+          if (catItems.length > 0) {
+            txtContent += `  🏷️ 分類：${cat}\n`;
+            catItems.forEach((item, idx) => {
+              totalIncomplete++;
+              txtContent += `    ${idx + 1}. [待辦] ${item.text}`;
+              if (item.detail) txtContent += `  (細項: ${item.detail})`;
+              if (item.note) txtContent += `  [備註: ${item.note}]`;
+              txtContent += `\n`;
+              
+              // 注意事項（若有換行則縮排顯示）
+              if (item.notice) {
+                const formattedNotice = item.notice.split('\n').map(line => `       ⚠️ 注意: ${line}`).join('\n');
+                txtContent += `${formattedNotice}\n`;
+              }
+            });
+            txtContent += `\n`;
+          }
+        });
+        txtContent += `\n`;
+      }
+    });
+
+    if (totalIncomplete === 0) {
+      alert(`🎉 太棒了！${currentMonth} 月份沒有任何未完成的工作項目！`);
+      return;
+    }
+
+    txtContent += `========================================\n`;
+    txtContent += `總計未完成項目：${totalIncomplete} 項\n`;
+    txtContent += `========================================\n`;
+
+    // 下載 TXT 檔案
+    const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `未完成工作項目清單_${currentMonth}.txt`;
+    link.click();
+  }
+
   function exportFullChecklistSOPTemplate() {
     const currentMonthChecklist = state.checklistData[state.currentMonth] || {};
     
@@ -1883,7 +1947,7 @@
     const sopPackage = {
       templateVersion: "2026.07.FullSOP",
       categories: categories, 
-      subTabs: subTabs,       
+      subTabs: subTabs,        
       checklistData: cleanedChecklistData 
     };
     
