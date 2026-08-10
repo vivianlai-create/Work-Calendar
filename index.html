@@ -59,7 +59,9 @@
     select, input, button, textarea { font-family: inherit; }
     select, input[type="text"], input[type="date"], input[type="color"], input[type="number"], textarea { padding: 6px 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
 
-    .control-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 20px; background-color: #fff; padding: 10px 15px; border-radius: 6px; border: 1px solid #e0e0e0; flex-wrap: wrap; }
+    .control-bar { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px; background-color: #fff; padding: 12px 18px; border-radius: 6px; border: 1px solid #e0e0e0; flex-wrap: wrap; }
+    .control-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    
     .sync-bar { display: flex; align-items: center; gap: 10px; background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; flex-wrap: wrap; }
 
     .category-section { margin-bottom: 25px; }
@@ -339,6 +341,7 @@
     <button class="btn" style="background-color: #9b59b6;" onclick="document.getElementById('import-file-input').click()">📥 匯入備份檔還原</button>
     <input type="file" id="import-file-input" style="display: none;" accept=".txt" onchange="importBackupFile(this)">
     <span id="sync-status" style="font-size: 13px; color: #555; margin-left: 10px;">(備份檔包含所有頁籤、行事曆日程、年度目標與完全自訂便條紙尺寸位置)</span>
+    <span id="storage-persist-status" style="font-size: 12px; font-weight: bold; color: #27ae60; margin-left: auto;">🛡️ 防清除持久備份防護中</span>
   </div>
 
   <div class="tabs">
@@ -350,9 +353,19 @@
   </div>
 
   <div class="control-bar">
-    <button class="btn btn-orange" onclick="jumpToCurrentMonth()">📅 跳回當月</button>
-    <label style="font-weight: bold;">切換儀表板月份：</label>
-    <select id="month-select" onchange="globalSwitchMonth()"></select>
+    <!-- Checklist 獨立月份切換控制區 -->
+    <div class="control-group">
+      <label style="font-weight: bold; color: #2c3e50;">📝 Checklist 月份：</label>
+      <select id="checklist-month-select" onchange="switchChecklistMonth()"></select>
+      <button class="btn btn-orange" style="padding: 4px 10px; font-size: 12px;" onclick="jumpToChecklistCurrentMonth()">📅 跳回當月</button>
+    </div>
+
+    <!-- 行事曆獨立月份切換控制區 -->
+    <div class="control-group">
+      <label style="font-weight: bold; color: #2c3e50;">📅 行事曆月份：</label>
+      <select id="calendar-month-select" onchange="switchCalendarMonth()"></select>
+      <button class="btn btn-orange" style="padding: 4px 10px; font-size: 12px;" onclick="jumpToCalendarCurrentMonth()">📅 跳回當月</button>
+    </div>
   </div>
 
   <!-- 分頁一：Checklist -->
@@ -655,8 +668,11 @@
 
   const initialYear = REAL_CURRENT_YEAR >= 2026 ? REAL_CURRENT_YEAR : 2026;
   const initialMonth = REAL_CURRENT_YEAR >= 2026 ? REAL_CURRENT_MONTH : 1;
+  const defaultMonthStr = `${initialYear}-${initialMonth.toString().padStart(2, '0')}`;
+
   let state = {
-    currentMonth: `${initialYear}-${initialMonth.toString().padStart(2, '0')}`,
+    checklistMonth: defaultMonthStr, // 📝 專屬 Checklist 月份
+    calendarMonth: defaultMonthStr,  // 📅 專屬 行事曆月份
     checklistData: {}, 
     events: {}, 
     importantItems: {},
@@ -679,6 +695,71 @@
   ];
 
   let headerData = { title: "工作儀表板 Ultimate Pro", desc: "" };
+
+  /* ================== 🛡️ 防自動清理持久儲存庫 (IndexedDB + Persistent Storage) ================== */
+  let dbInstance = null;
+
+  async function requestPersistentStorage() {
+    if (navigator.storage && navigator.storage.persist) {
+      const isPersisted = await navigator.storage.persist();
+      const statusEl = document.getElementById('storage-persist-status');
+      if (statusEl) {
+        if (isPersisted) {
+          statusEl.innerText = "🛡️ 防自動清理持久保護啟用中";
+          statusEl.style.color = "#27ae60";
+        } else {
+          statusEl.innerText = "⚠️ 瀏覽器尚未授予持久儲存權限";
+          statusEl.style.color = "#e67e22";
+        }
+      }
+    }
+  }
+
+  function initIndexedDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('DashboardDB', 1);
+      request.onupgradeneeded = function(e) {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('appData')) {
+          db.createObjectStore('appData', { keyPath: 'key' });
+        }
+      };
+      request.onsuccess = function(e) {
+        dbInstance = e.target.result;
+        resolve(dbInstance);
+      };
+      request.onerror = function(e) {
+        console.warn('IndexedDB 初始化失敗:', e);
+        resolve(null);
+      };
+    });
+  }
+
+  function saveToIndexedDB(key, val) {
+    if (!dbInstance) return;
+    try {
+      const tx = dbInstance.transaction('appData', 'readwrite');
+      const store = tx.objectStore('appData');
+      store.put({ key: key, value: val });
+    } catch (err) {
+      console.warn('寫入 IndexedDB 失敗:', err);
+    }
+  }
+
+  function getFromIndexedDB(key) {
+    return new Promise((resolve) => {
+      if (!dbInstance) return resolve(null);
+      try {
+        const tx = dbInstance.transaction('appData', 'readonly');
+        const store = tx.objectStore('appData');
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.value : null);
+        req.onerror = () => resolve(null);
+      } catch (err) {
+        resolve(null);
+      }
+    });
+  }
 
   function toggleSectionFold(sectionId, btn) {
     const el = document.getElementById(sectionId);
@@ -720,7 +801,7 @@
   function exportBackupFile() {
     const backupData = { categories, state, subTabs, currentSubTab, recurringEventsTemplate, headerData, scratchpadCards };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `工作儀表板備份_${state.currentMonth}.txt`; link.click();
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `工作儀表板備份_${state.calendarMonth}.txt`; link.click();
   }
 
   function importBackupFile(input) {
@@ -732,6 +813,8 @@
         categories = decodedData.categories || ['核心專案', '行政/例行', '跨部門協作'];
         subTabs = decodedData.subTabs || ['主頁面']; currentSubTab = decodedData.currentSubTab || '主頁面'; 
         state = decodedData.state || {};
+        if (!state.checklistMonth) state.checklistMonth = state.currentMonth || defaultMonthStr;
+        if (!state.calendarMonth) state.calendarMonth = state.currentMonth || defaultMonthStr;
         if (!state.checklistData) state.checklistData = {};
         if (!state.events) state.events = {};
         if (!state.importantItems) state.importantItems = {};
@@ -741,6 +824,11 @@
         if (!state.errorItems) state.errorItems = {}; 
         if (state.yearlyGoals === undefined) state.yearlyGoals = ""; 
         
+        if (decodedData.headerData) {
+          headerData = decodedData.headerData;
+          document.getElementById('editable-title').innerText = headerData.title || "工作儀表板 Ultimate Pro";
+        }
+
         if (decodedData.scratchpadCards) {
           scratchpadCards = decodedData.scratchpadCards;
           scratchpadCards.forEach(c => {
@@ -753,14 +841,10 @@
           recurringEventsTemplate = decodedData.recurringEventsTemplate;
           recurringEventsTemplate.forEach(t => { if (t.daily === undefined) t.daily = false; });
         }
-        
-        const [impYear] = state.currentMonth.split('-').map(Number);
-        if (impYear < 2026) {
-          state.currentMonth = "2026-01";
-        }
 
         generateMonthOptions();
-        globalSwitchMonth(); 
+        switchChecklistMonth();
+        switchCalendarMonth();
         renderScratchpadCards();
         renderYearlyGoals(); 
         alert("🎉 備份資料已 100% 成功匯入還原！");
@@ -776,53 +860,82 @@
     localStorage.setItem('dashboard_state', JSON.stringify(state));
     localStorage.setItem('dashboard_recurring', JSON.stringify(recurringEventsTemplate));
     localStorage.setItem('dashboard_scratchpad_cards', JSON.stringify(scratchpadCards));
+    localStorage.setItem('dashboard_header_data', JSON.stringify(headerData));
+
+    // 🛡️ 同步進行 IndexedDB 雙重備份
+    saveToIndexedDB('dashboard_categories', categories);
+    saveToIndexedDB('dashboard_subtabs', subTabs);
+    saveToIndexedDB('dashboard_current_subtab', currentSubTab);
+    saveToIndexedDB('dashboard_state', state);
+    saveToIndexedDB('dashboard_recurring', recurringEventsTemplate);
+    saveToIndexedDB('dashboard_scratchpad_cards', scratchpadCards);
+    saveToIndexedDB('dashboard_header_data', headerData);
   }
 
-  function loadFromLocalStorage() {
-    const cachedCategories = localStorage.getItem('dashboard_categories');
-    const cachedSubTabs = localStorage.getItem('dashboard_subtabs');
-    const cachedCurrentSubTab = localStorage.getItem('dashboard_current_subtab');
-    const cachedState = localStorage.getItem('dashboard_state');
-    const cachedRecurring = localStorage.getItem('dashboard_recurring');
-    const cachedScratchpadCards = localStorage.getItem('dashboard_scratchpad_cards');
+  async function loadFromLocalStorage() {
+    let cachedCategories = localStorage.getItem('dashboard_categories');
+    let cachedSubTabs = localStorage.getItem('dashboard_subtabs');
+    let cachedCurrentSubTab = localStorage.getItem('dashboard_current_subtab');
+    let cachedState = localStorage.getItem('dashboard_state');
+    let cachedRecurring = localStorage.getItem('dashboard_recurring');
+    let cachedScratchpadCards = localStorage.getItem('dashboard_scratchpad_cards');
+    let cachedHeaderData = localStorage.getItem('dashboard_header_data');
 
-    if (cachedCategories) categories = JSON.parse(cachedCategories);
-    if (cachedSubTabs) subTabs = JSON.parse(cachedSubTabs);
-    if (cachedCurrentSubTab) currentSubTab = cachedCurrentSubTab;
-    
-    if (cachedScratchpadCards) {
-      scratchpadCards = JSON.parse(cachedScratchpadCards);
-      scratchpadCards.forEach(c => {
-        if (c.w === undefined) c.w = 260; if (c.h === undefined) c.h = 180;
-        if (c.bgColor === undefined) c.bgColor = '#fffef2'; if (c.textColor === undefined) c.textColor = '#5d4037';
-      });
-    }
-
-    if (cachedState) {
-      state = JSON.parse(cachedState);
-      if (!state.checklistData) state.checklistData = {};
-      if (!state.events) state.events = {};
-      if (!state.importantItems) state.importantItems = {};
-      if (!state.memoItems) state.memoItems = {};
-      if (!state.sharedItems) state.sharedItems = {};
-      if (!state.achievementItems) state.achievementItems = {}; 
-      if (!state.errorItems) state.errorItems = {}; 
-      if (state.yearlyGoals === undefined) state.yearlyGoals = ""; 
-
-      const [cachedYear] = state.currentMonth.split('-').map(Number);
-      if (cachedYear < 2026) {
-        state.currentMonth = "2026-01";
+    // 🛡️ 防自動清理回復：若 LocalStorage 被清空，嘗試從 IndexedDB 自動拯救備份
+    if (!cachedState && dbInstance) {
+      console.log('⚠️ LocalStorage 空白，啟動 IndexedDB 備份自動還原...');
+      const dbState = await getFromIndexedDB('dashboard_state');
+      if (dbState) {
+        state = dbState;
+        categories = (await getFromIndexedDB('dashboard_categories')) || categories;
+        subTabs = (await getFromIndexedDB('dashboard_subtabs')) || subTabs;
+        currentSubTab = (await getFromIndexedDB('dashboard_current_subtab')) || currentSubTab;
+        recurringEventsTemplate = (await getFromIndexedDB('dashboard_recurring')) || recurringEventsTemplate;
+        scratchpadCards = (await getFromIndexedDB('dashboard_scratchpad_cards')) || scratchpadCards;
+        headerData = (await getFromIndexedDB('dashboard_header_data')) || headerData;
+        saveToLocalStorage(); // 重新補回 LocalStorage
       }
     } else {
-      const initKey = `${initialYear}-${initialMonth.toString().padStart(2, '0')}`;
-      state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
-    }
-    if (cachedRecurring) {
-      recurringEventsTemplate = JSON.parse(cachedRecurring);
-      recurringEventsTemplate.forEach(t => { 
-        if (t.week === undefined) t.week = ''; 
-        if (t.daily === undefined) t.daily = false;
-      });
+      if (cachedCategories) categories = JSON.parse(cachedCategories);
+      if (cachedSubTabs) subTabs = JSON.parse(cachedSubTabs);
+      if (cachedCurrentSubTab) currentSubTab = cachedCurrentSubTab;
+      if (cachedHeaderData) {
+        headerData = JSON.parse(cachedHeaderData);
+        document.getElementById('editable-title').innerText = headerData.title || "工作儀表板 Ultimate Pro";
+      }
+
+      if (cachedScratchpadCards) {
+        scratchpadCards = JSON.parse(cachedScratchpadCards);
+        scratchpadCards.forEach(c => {
+          if (c.w === undefined) c.w = 260; if (c.h === undefined) c.h = 180;
+          if (c.bgColor === undefined) c.bgColor = '#fffef2'; if (c.textColor === undefined) c.textColor = '#5d4037';
+        });
+      }
+
+      if (cachedState) {
+        state = JSON.parse(cachedState);
+        if (!state.checklistMonth) state.checklistMonth = state.currentMonth || defaultMonthStr;
+        if (!state.calendarMonth) state.calendarMonth = state.currentMonth || defaultMonthStr;
+        if (!state.checklistData) state.checklistData = {};
+        if (!state.events) state.events = {};
+        if (!state.importantItems) state.importantItems = {};
+        if (!state.memoItems) state.memoItems = {};
+        if (!state.sharedItems) state.sharedItems = {};
+        if (!state.achievementItems) state.achievementItems = {}; 
+        if (!state.errorItems) state.errorItems = {}; 
+        if (state.yearlyGoals === undefined) state.yearlyGoals = ""; 
+      } else {
+        const initKey = `${initialYear}-${initialMonth.toString().padStart(2, '0')}`;
+        state.checklistData = { [initKey]: { '主頁面': [{ text: '專案進度追蹤', category: '核心專案', completed: false, detail: '', notice: '', note: '' }] } };
+      }
+
+      if (cachedRecurring) {
+        recurringEventsTemplate = JSON.parse(cachedRecurring);
+        recurringEventsTemplate.forEach(t => { 
+          if (t.week === undefined) t.week = ''; 
+          if (t.daily === undefined) t.daily = false;
+        });
+      }
     }
 
     const primaryColor = localStorage.getItem('theme_primary_color') || '#4a90e2';
@@ -842,9 +955,17 @@
   }
   function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
+  // 雙選單月份選單渲染
   function generateMonthOptions() {
-    const select = document.getElementById('month-select'); select.innerHTML = '';
-    const [selectedYear] = state.currentMonth.split('-').map(Number);
+    const selectChecklist = document.getElementById('checklist-month-select');
+    const selectCalendar = document.getElementById('calendar-month-select');
+    selectChecklist.innerHTML = '';
+    selectCalendar.innerHTML = '';
+
+    const selectedYear = Math.max(
+      parseInt(state.checklistMonth.split('-')[0]),
+      parseInt(state.calendarMonth.split('-')[0])
+    );
     const startYear = 2026;
     const referenceYear = Math.max(REAL_CURRENT_YEAR, selectedYear);
     const endYear = referenceYear + 1;
@@ -858,21 +979,74 @@
       let mStr = m.toString().padStart(2, '0');
       let val = `${y}-${mStr}`;
       
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = `${y} 年 ${mStr} 月`;
-      select.appendChild(opt);
+      const opt1 = document.createElement('option');
+      opt1.value = val;
+      opt1.textContent = `${y} 年 ${mStr} 月`;
+      selectChecklist.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = val;
+      opt2.textContent = `${y} 年 ${mStr} 月`;
+      selectCalendar.appendChild(opt2);
       
       dateCursor.setMonth(dateCursor.getMonth() + 1);
     }
-    select.value = state.currentMonth;
+
+    selectChecklist.value = state.checklistMonth;
+    selectCalendar.value = state.calendarMonth;
   }
 
-  function jumpToCurrentMonth() {
+  /* ================== 📝 Checklist 月份獨立控制 ================== */
+  function switchChecklistMonth() {
+    state.checklistMonth = document.getElementById('checklist-month-select').value;
+    renderSubTabs();
+    renderChecklist();
+    saveToLocalStorage();
+  }
+
+  function jumpToChecklistCurrentMonth() {
     const target = REAL_CURRENT_YEAR >= 2026 
       ? `${REAL_CURRENT_YEAR}-${REAL_CURRENT_MONTH.toString().padStart(2, '0')}`
       : "2026-01";
-    document.getElementById('month-select').value = target; globalSwitchMonth();
+    document.getElementById('checklist-month-select').value = target;
+    switchChecklistMonth();
+  }
+
+  /* ================== 📅 行事曆月份獨立控制 ================== */
+  function switchCalendarMonth() {
+    state.calendarMonth = document.getElementById('calendar-month-select').value;
+    
+    // ⚡ 順延過去未完成事項邏輯（以行事曆月份為依歸）
+    carryForwardIncompleteItems();
+
+    const defaultDateVal = `${state.calendarMonth}-01`;
+    document.getElementById('new-important-date').value = defaultDateVal; 
+    document.getElementById('new-memo-date').value = defaultDateVal; 
+    document.getElementById('new-shared-date').value = defaultDateVal; 
+    document.getElementById('new-achievement-date').value = defaultDateVal; 
+    document.getElementById('new-error-date').value = defaultDateVal;
+    
+    const [year] = state.calendarMonth.split('-').map(Number);
+    initializeDefaultHolidays(year);
+
+    batchPoolArray = []; 
+    renderBatchPool(); 
+    renderCalendar(); 
+    renderImportantItems(); 
+    renderMemoItems(); 
+    renderSharedItems(); 
+    renderAchievementItems(); 
+    renderErrorItems(); 
+    renderRecurringManager(); 
+    saveToLocalStorage();
+  }
+
+  function jumpToCalendarCurrentMonth() {
+    const target = REAL_CURRENT_YEAR >= 2026 
+      ? `${REAL_CURRENT_YEAR}-${REAL_CURRENT_MONTH.toString().padStart(2, '0')}`
+      : "2026-01";
+    document.getElementById('calendar-month-select').value = target;
+    switchCalendarMonth();
   }
 
   function getActualDayFromWorkday(year, month, targetWorkday) {
@@ -898,9 +1072,9 @@
     else { wrapper.style.display = "none"; btn.innerText = "[▶ 展開列表]"; }
   }
 
-  // 🔄 自動順延過去未完成事項邏輯（保留歷史紀錄與原始建立日期）
+  // 🔄 自動順延過去未完成事項邏輯（針對行事曆右側欄位）
   function carryForwardIncompleteItems() {
-    const currentKey = state.currentMonth;
+    const currentKey = state.calendarMonth;
     
     const allMonths = Array.from(new Set([
       ...Object.keys(state.memoItems || {}),
@@ -914,14 +1088,13 @@
     if (!state.importantItems[currentKey]) state.importantItems[currentKey] = [];
 
     pastMonths.forEach(mKey => {
-      // 1. 舊月份未完成的「備忘錄事項」-> 複製順延至當前月份「備忘錄」（保留舊月份歷史檔）
       if (state.memoItems[mKey] && state.memoItems[mKey].length > 0) {
         state.memoItems[mKey].forEach(item => {
           if (!item.completed) {
             const isExist = state.memoItems[currentKey].some(e => e.text === item.text && e.date === item.date);
             if (!isExist) {
               state.memoItems[currentKey].push({
-                date: item.date, // 保留原先建立的日期
+                date: item.date,
                 text: item.text,
                 completed: false
               });
@@ -930,14 +1103,13 @@
         });
       }
 
-      // 2. 舊月份未完成的「本月重要事項」-> 複製順延至當前月份「本月重要事項」（保留舊月份歷史檔）
       if (state.importantItems[mKey] && state.importantItems[mKey].length > 0) {
         state.importantItems[mKey].forEach(item => {
           if (!item.completed) {
             const isExist = state.importantItems[currentKey].some(e => e.text === item.text && e.date === item.date);
             if (!isExist) {
               state.importantItems[currentKey].push({
-                date: item.date, // 保留原先建立的日期
+                date: item.date,
                 text: item.text,
                 completed: false
               });
@@ -946,37 +1118,6 @@
         });
       }
     });
-  }
-
-  function globalSwitchMonth() {
-    state.currentMonth = document.getElementById('month-select').value;
-    
-    // ⚡ 在載入畫面前，先執行自動順延未完成事項邏輯
-    carryForwardIncompleteItems();
-
-    const defaultDateVal = `${state.currentMonth}-01`;
-    document.getElementById('new-important-date').value = defaultDateVal; 
-    document.getElementById('new-memo-date').value = defaultDateVal; 
-    document.getElementById('new-shared-date').value = defaultDateVal; 
-    document.getElementById('new-achievement-date').value = defaultDateVal; 
-    document.getElementById('new-error-date').value = defaultDateVal;
-    
-    const [year] = state.currentMonth.split('-').map(Number);
-    initializeDefaultHolidays(year);
-
-    batchPoolArray = []; 
-    renderBatchPool(); 
-    renderSubTabs(); 
-    renderChecklist(); 
-    renderCalendar(); 
-    renderImportantItems(); 
-    renderMemoItems(); 
-    renderSharedItems(); 
-    renderAchievementItems(); 
-    renderErrorItems(); 
-    renderRecurringManager(); 
-    renderYearlyGoals(); 
-    saveToLocalStorage();
   }
 
   /* ================== 子頁籤 ================== */
@@ -1011,8 +1152,8 @@
       btn.onclick = () => switchSubTab(name); 
       container.appendChild(btn);
     });
-    const [year] = state.currentMonth.split('-').map(Number);
-    document.getElementById('checklist-card-title-text').innerText = `【${currentSubTab}】工作項目 Checklist`;
+    const [year] = state.checklistMonth.split('-').map(Number);
+    document.getElementById('checklist-card-title-text').innerText = `【${currentSubTab}】工作項目 Checklist (${state.checklistMonth})`;
     document.getElementById('yearly-tracker-title').innerText = `📊 【${currentSubTab}】分頁年度工作項目完成狀態 (${year}年 1-12 月全局追蹤)`;
     renderYearlyProgressTracker();
   }
@@ -1088,7 +1229,7 @@
 
   function renderYearlyProgressTracker() {
     const tbody = document.getElementById('yearly-tracker-tbody');
-    const [year] = state.currentMonth.split('-').map(Number);
+    const [year] = state.checklistMonth.split('-').map(Number);
     const rowsHtml = [];
     categories.forEach(cat => {
       let trHtml = `<td style="font-weight: bold; text-align: left; background-color: #fafafa;">${cat}</td>`;
@@ -1114,7 +1255,7 @@
   function toggleCategoryCollapse(catName) { collapsedCategories[catName] = !collapsedCategories[catName]; renderChecklist(); }
   function insertChecklistItemInline(realIndex) {
     const quickText = prompt("請在此項目下方插入新的工作項目內容："); if (!quickText || quickText.trim() === '') return;
-    state.checklistData[state.currentMonth][currentSubTab].splice(realIndex + 1, 0, { text: quickText.trim(), category: state.checklistData[state.currentMonth][currentSubTab][realIndex].category, completed: false, detail: '', notice: '', note: '' });
+    state.checklistData[state.checklistMonth][currentSubTab].splice(realIndex + 1, 0, { text: quickText.trim(), category: state.checklistData[state.checklistMonth][currentSubTab][realIndex].category, completed: false, detail: '', notice: '', note: '' });
     renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage();
   }
 
@@ -1221,9 +1362,9 @@
 
   function renderChecklist() {
     const container = document.getElementById('checklist-category-container'); container.innerHTML = '';
-    if (!state.checklistData[state.currentMonth]) state.checklistData[state.currentMonth] = {};
-    if (!state.checklistData[state.currentMonth][currentSubTab]) state.checklistData[state.currentMonth][currentSubTab] = [];
-    const monthItems = state.checklistData[state.currentMonth][currentSubTab];
+    if (!state.checklistData[state.checklistMonth]) state.checklistData[state.checklistMonth] = {};
+    if (!state.checklistData[state.checklistMonth][currentSubTab]) state.checklistData[state.checklistMonth][currentSubTab] = [];
+    const monthItems = state.checklistData[state.checklistMonth][currentSubTab];
     
     categories.forEach(cat => {
       const catItems = monthItems.filter(item => item.category === cat); const isCollapsed = !!collapsedCategories[cat];
@@ -1263,29 +1404,29 @@
   }
 
   function toggleChecklistItem(index) { 
-    state.checklistData[state.currentMonth][currentSubTab][index].completed = !state.checklistData[state.currentMonth][currentSubTab][index].completed; 
+    state.checklistData[state.checklistMonth][currentSubTab][index].completed = !state.checklistData[state.checklistMonth][currentSubTab][index].completed; 
     renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage(); 
   }
-  function updateItemName(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].text = value.trim(); saveToLocalStorage(); }
-  function updateItemDetail(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].detail = value; saveToLocalStorage(); }
-  function updateItemNotice(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].notice = value; saveToLocalStorage(); }
-  function updateItemNote(index, value) { state.checklistData[state.currentMonth][currentSubTab][index].note = value; saveToLocalStorage(); }
-  function deleteChecklistItem(index) { state.checklistData[state.currentMonth][currentSubTab].splice(index, 1); renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage(); }
+  function updateItemName(index, value) { state.checklistData[state.checklistMonth][currentSubTab][index].text = value.trim(); saveToLocalStorage(); }
+  function updateItemDetail(index, value) { state.checklistData[state.checklistMonth][currentSubTab][index].detail = value; saveToLocalStorage(); }
+  function updateItemNotice(index, value) { state.checklistData[state.checklistMonth][currentSubTab][index].notice = value; saveToLocalStorage(); }
+  function updateItemNote(index, value) { state.checklistData[state.checklistMonth][currentSubTab][index].note = value; saveToLocalStorage(); }
+  function deleteChecklistItem(index) { state.checklistData[state.checklistMonth][currentSubTab].splice(index, 1); renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage(); }
   
   function addChecklistItem(e) {
     e.preventDefault();
-    state.checklistData[state.currentMonth][currentSubTab].push({ text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, detail: document.getElementById('new-item-detail').value.trim(), notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() });
+    state.checklistData[state.checklistMonth][currentSubTab].push({ text: document.getElementById('new-item-input').value.trim(), category: document.getElementById('new-item-category').value, completed: false, detail: document.getElementById('new-item-detail').value.trim(), notice: document.getElementById('new-item-notice').value, note: document.getElementById('new-item-note').value.trim() });
     document.getElementById('new-item-input').value = ''; document.getElementById('new-item-detail').value = ''; document.getElementById('new-item-notice').value = ''; document.getElementById('new-item-note').value = '';
     renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage();
   }
 
   function copyLastMonthChecklist() {
-    const [year, month] = state.currentMonth.split('-').map(Number);
+    const [year, month] = state.checklistMonth.split('-').map(Number);
     let lastKey = `${year}-${(month - 2 < 0 ? 12 : month - 1).toString().padStart(2, '0')}`; if (month - 2 < 0) lastKey = `${year - 1}-12`;
     if (!state.checklistData[lastKey]) state.checklistData[lastKey] = {};
     const lastItems = state.checklistData[lastKey][currentSubTab] || [];
     lastItems.forEach(item => { 
-      state.checklistData[state.currentMonth][currentSubTab].push({ 
+      state.checklistData[state.checklistMonth][currentSubTab].push({ 
         text: item.text, 
         category: item.category, 
         completed: false, 
@@ -1300,85 +1441,85 @@
   /* ================== 其他面板資訊功能 ================== */
   function renderImportantItems() {
     const container = document.getElementById('important-items-container'); container.innerHTML = '';
-    if (!state.importantItems[state.currentMonth]) state.importantItems[state.currentMonth] = [];
-    state.importantItems[state.currentMonth].forEach((item, index) => {
+    if (!state.importantItems[state.calendarMonth]) state.importantItems[state.calendarMonth] = [];
+    state.importantItems[state.calendarMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = `sidebar-list-item ${item.completed ? 'completed' : ''}`;
       div.innerHTML = `<div><input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleImportantItem(${index})"><span class="date-tag" style="background-color: #fef9e7; color: #d35400; margin-left:5px;">${item.date}</span><span style="font-weight: bold; margin-left:5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteImportantItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addImportantItem(e) {
-    e.preventDefault(); if (!state.importantItems[state.currentMonth]) state.importantItems[state.currentMonth] = [];
-    state.importantItems[state.currentMonth].push({ date: document.getElementById('new-important-date').value, text: document.getElementById('new-important-input').value.trim(), completed: false });
+    e.preventDefault(); if (!state.importantItems[state.calendarMonth]) state.importantItems[state.calendarMonth] = [];
+    state.importantItems[state.calendarMonth].push({ date: document.getElementById('new-important-date').value, text: document.getElementById('new-important-input').value.trim(), completed: false });
     document.getElementById('new-important-input').value = ''; renderImportantItems(); saveToLocalStorage();
   }
-  function toggleImportantItem(index) { state.importantItems[state.currentMonth][index].completed = !state.importantItems[state.currentMonth][index].completed; renderImportantItems(); saveToLocalStorage(); }
-  function deleteImportantItem(index) { state.importantItems[state.currentMonth].splice(index, 1); renderImportantItems(); saveToLocalStorage(); }
+  function toggleImportantItem(index) { state.importantItems[state.calendarMonth][index].completed = !state.importantItems[state.calendarMonth][index].completed; renderImportantItems(); saveToLocalStorage(); }
+  function deleteImportantItem(index) { state.importantItems[state.calendarMonth].splice(index, 1); renderImportantItems(); saveToLocalStorage(); }
 
   function renderMemoItems() {
     const container = document.getElementById('memo-items-container'); container.innerHTML = '';
-    if (!state.memoItems[state.currentMonth]) state.memoItems[state.currentMonth] = [];
-    state.memoItems[state.currentMonth].forEach((item, index) => {
+    if (!state.memoItems[state.calendarMonth]) state.memoItems[state.calendarMonth] = [];
+    state.memoItems[state.calendarMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = `sidebar-list-item ${item.completed ? 'completed' : ''}`;
       div.innerHTML = `<div><input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleMemoItem(${index})"><span class="date-tag" style="background-color: #eaf2f8; color: #2c3e50; margin-left:5px;">${item.date}</span><span style="margin-left:5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteMemoItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addMemoItem(e) {
-    e.preventDefault(); if (!state.memoItems[state.currentMonth]) state.memoItems[state.currentMonth] = [];
-    state.memoItems[state.currentMonth].push({ date: document.getElementById('new-memo-date').value, text: document.getElementById('new-memo-input').value.trim(), completed: false });
+    e.preventDefault(); if (!state.memoItems[state.calendarMonth]) state.memoItems[state.calendarMonth] = [];
+    state.memoItems[state.calendarMonth].push({ date: document.getElementById('new-memo-date').value, text: document.getElementById('new-memo-input').value.trim(), completed: false });
     document.getElementById('new-memo-input').value = ''; renderMemoItems(); saveToLocalStorage();
   }
-  function toggleMemoItem(index) { state.memoItems[state.currentMonth][index].completed = !state.memoItems[state.currentMonth][index].completed; renderMemoItems(); saveToLocalStorage(); }
-  function deleteMemoItem(index) { state.memoItems[state.currentMonth].splice(index, 1); renderMemoItems(); saveToLocalStorage(); }
+  function toggleMemoItem(index) { state.memoItems[state.calendarMonth][index].completed = !state.memoItems[state.calendarMonth][index].completed; renderMemoItems(); saveToLocalStorage(); }
+  function deleteMemoItem(index) { state.memoItems[state.calendarMonth].splice(index, 1); renderMemoItems(); saveToLocalStorage(); }
 
   function renderSharedItems() {
     const container = document.getElementById('shared-items-container'); container.innerHTML = '';
-    if (!state.sharedItems[state.currentMonth]) state.sharedItems[state.currentMonth] = [];
-    state.sharedItems[state.currentMonth].forEach((item, index) => {
+    if (!state.sharedItems[state.calendarMonth]) state.sharedItems[state.calendarMonth] = [];
+    state.sharedItems[state.calendarMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = 'sidebar-list-item';
       div.innerHTML = `<div><span class="date-tag">${item.date}</span><span style="margin-left: 5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteSharedItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addSharedItem(e) {
-    e.preventDefault(); if (!state.sharedItems[state.currentMonth]) state.sharedItems[state.currentMonth] = [];
-    state.sharedItems[state.currentMonth].push({ date: document.getElementById('new-shared-date').value, text: document.getElementById('new-shared-input').value.trim() });
+    e.preventDefault(); if (!state.sharedItems[state.calendarMonth]) state.sharedItems[state.calendarMonth] = [];
+    state.sharedItems[state.calendarMonth].push({ date: document.getElementById('new-shared-date').value, text: document.getElementById('new-shared-input').value.trim() });
     document.getElementById('new-shared-input').value = ''; renderSharedItems(); saveToLocalStorage();
   }
-  function deleteSharedItem(index) { state.sharedItems[state.currentMonth].splice(index, 1); renderSharedItems(); saveToLocalStorage(); }
+  function deleteSharedItem(index) { state.sharedItems[state.calendarMonth].splice(index, 1); renderSharedItems(); saveToLocalStorage(); }
 
   function renderAchievementItems() {
     const container = document.getElementById('achievement-items-container'); container.innerHTML = '';
-    if (!state.achievementItems[state.currentMonth]) state.achievementItems[state.currentMonth] = [];
-    state.achievementItems[state.currentMonth].forEach((item, index) => {
+    if (!state.achievementItems[state.calendarMonth]) state.achievementItems[state.calendarMonth] = [];
+    state.achievementItems[state.calendarMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = 'sidebar-list-item';
       div.innerHTML = `<div><span class="date-tag" style="background-color: #e8f8f5; color: #117a65;">${item.date}</span><span style="margin-left: 5px; font-weight: bold; color: #117a65;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteAchievementItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addAchievementItem(e) {
-    e.preventDefault(); if (!state.achievementItems[state.currentMonth]) state.achievementItems[state.currentMonth] = [];
-    state.achievementItems[state.currentMonth].push({ date: document.getElementById('new-achievement-date').value, text: document.getElementById('new-achievement-input').value.trim() });
+    e.preventDefault(); if (!state.achievementItems[state.calendarMonth]) state.achievementItems[state.calendarMonth] = [];
+    state.achievementItems[state.calendarMonth].push({ date: document.getElementById('new-achievement-date').value, text: document.getElementById('new-achievement-input').value.trim() });
     document.getElementById('new-achievement-input').value = ''; renderAchievementItems(); saveToLocalStorage();
   }
-  function deleteAchievementItem(index) { state.achievementItems[state.currentMonth].splice(index, 1); renderAchievementItems(); saveToLocalStorage(); }
+  function deleteAchievementItem(index) { state.achievementItems[state.calendarMonth].splice(index, 1); renderAchievementItems(); saveToLocalStorage(); }
 
   function renderErrorItems() {
     const container = document.getElementById('error-items-container'); container.innerHTML = '';
-    if (!state.errorItems[state.currentMonth]) state.errorItems[state.currentMonth] = [];
-    state.errorItems[state.currentMonth].forEach((item, index) => {
+    if (!state.errorItems[state.calendarMonth]) state.errorItems[state.calendarMonth] = [];
+    state.errorItems[state.calendarMonth].forEach((item, index) => {
       const div = document.createElement('div'); div.className = 'sidebar-list-item';
       div.innerHTML = `<div><span class="date-tag" style="background-color: #fbe9e7; color: #d84315;">${item.date}</span><span style="margin-left: 5px;">${item.text}</span></div><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteErrorItem(${index})">刪除</button>`;
       container.appendChild(div);
     });
   }
   function addErrorItem(e) {
-    e.preventDefault(); if (!state.errorItems[state.currentMonth]) state.errorItems[state.currentMonth] = [];
-    state.errorItems[state.currentMonth].push({ date: document.getElementById('new-error-date').value, text: document.getElementById('new-error-input').value.trim() });
+    e.preventDefault(); if (!state.errorItems[state.calendarMonth]) state.errorItems[state.calendarMonth] = [];
+    state.errorItems[state.calendarMonth].push({ date: document.getElementById('new-error-date').value, text: document.getElementById('new-error-input').value.trim() });
     document.getElementById('new-error-input').value = ''; renderErrorItems(); saveToLocalStorage();
   }
-  function deleteErrorItem(index) { state.errorItems[state.currentMonth].splice(index, 1); renderErrorItems(); saveToLocalStorage(); }
+  function deleteErrorItem(index) { state.errorItems[state.calendarMonth].splice(index, 1); renderErrorItems(); saveToLocalStorage(); }
 
   function renderBatchPool() {
     const listDiv = document.getElementById('batch-items-list'); listDiv.innerHTML = '';
@@ -1401,13 +1542,13 @@
     if (batchPoolArray.length === 0) return;
     const targetDayStr = prompt(`請輸入要把這 ${batchPoolArray.length} 項行程一併大量搬移到幾號？(例如輸入: 15)`);
     if (!targetDayStr) return; const dayNum = parseInt(targetDayStr);
-    const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
+    const [year, month] = state.calendarMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
     if (isNaN(dayNum) || dayNum < 1 || dayNum > lastDay) { alert("⚠️ 輸入日期不正確！"); return; }
     
-    if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
-    if (!state.events[state.currentMonth][dayNum]) state.events[state.currentMonth][dayNum] = [];
+    if (!state.events[state.calendarMonth]) state.events[state.calendarMonth] = {};
+    if (!state.events[state.calendarMonth][dayNum]) state.events[state.calendarMonth][dayNum] = [];
     
-    batchPoolArray.forEach(item => { state.events[state.currentMonth][dayNum].push(item); });
+    batchPoolArray.forEach(item => { state.events[state.calendarMonth][dayNum].push(item); });
     clearBatchPool(false); renderCalendar(); saveToLocalStorage(); alert(`🚀 成功將項目大量整批挪動至 ${dayNum} 號！`);
   }
 
@@ -1417,9 +1558,9 @@
     batchBox.classList.remove('drag-over-active');
     
     if (draggedItem !== null && sourceDay !== null) {
-      const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
-      if (state.events[state.currentMonth][sourceDay].length === 0) {
-        delete state.events[state.currentMonth][sourceDay];
+      const movedObj = state.events[state.calendarMonth][sourceDay].splice(draggedItem.index, 1)[0];
+      if (state.events[state.calendarMonth][sourceDay].length === 0) {
+        delete state.events[state.calendarMonth][sourceDay];
       }
       batchPoolArray.push(movedObj);
       renderCalendar();
@@ -1432,19 +1573,19 @@
   let draggedItem = null; let sourceDay = null;
 
   function toggleEventCompleted(day, idx) {
-    if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
-    state.events[state.currentMonth][day][idx].completed = !state.events[state.currentMonth][day][idx].completed;
+    if (!state.events[state.calendarMonth] || !state.events[state.calendarMonth][day]) return;
+    state.events[state.calendarMonth][day][idx].completed = !state.events[state.calendarMonth][day][idx].completed;
     renderCalendar(); saveToLocalStorage();
   }
 
   function copySingleDayEventsToClipboard(day) {
-    const dayEvents = state.events[state.currentMonth]?.[day] || [];
+    const dayEvents = state.events[state.calendarMonth]?.[day] || [];
     if (dayEvents.length === 0) {
       alert(`⚠️ ${day}號 目前沒有安排任何工作日程喔！`);
       return;
     }
 
-    let reportText = `【${state.currentMonth}-${day.toString().padStart(2, '0')} 工作日程彙報】\n`;
+    let reportText = `【${state.calendarMonth}-${day.toString().padStart(2, '0')} 工作日程彙報】\n`;
     dayEvents.forEach((evt, idx) => {
       const status = evt.completed ? "已完成" : "進行中";
       reportText += `${idx + 1}. [${status}] ${evt.text}\n`;
@@ -1464,14 +1605,14 @@
   }
 
   function editDayEvent(day, idx) {
-    if (!state.events[state.currentMonth] || !state.events[state.currentMonth][day]) return;
-    const targetObj = state.events[state.currentMonth][day][idx];
+    if (!state.events[state.calendarMonth] || !state.events[state.calendarMonth][day]) return;
+    const targetObj = state.events[state.calendarMonth][day][idx];
     const newText = prompt("請編輯行程內容文字 (可直接貼上多行文字，或使用 \\n 作為換行)：", targetObj.text); 
     if (newText === null) return;
     
     if (newText.trim() === '') {
-      state.events[state.currentMonth][day].splice(idx, 1);
-      if (state.events[state.currentMonth][day].length === 0) delete state.events[state.currentMonth][day];
+      state.events[state.calendarMonth][day].splice(idx, 1);
+      if (state.events[state.calendarMonth][day].length === 0) delete state.events[state.calendarMonth][day];
     } else {
       targetObj.text = newText.replace(/\\n/g, '\n').trim();
       const newColor = prompt("設定標籤底色 (填色名。若要拿掉顏色回預設，請填寫 x 或是留空)：", targetObj.color || '#e3f2fd');
@@ -1499,7 +1640,7 @@
   }
 
   function renderCalendar() {
-    const [year, month] = state.currentMonth.split('-').map(Number);
+    const [year, month] = state.calendarMonth.split('-').map(Number);
     document.getElementById('calendar-month-title').textContent = `${year} 年 ${month.toString().padStart(2, '0')} 月`;
     const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
     
@@ -1509,7 +1650,7 @@
     const firstDayIndex = getFirstDayOfWeek(year, month); const totalDays = getDaysInMonth(year, month);
     for (let i = 0; i < firstDayIndex; i++) { const emp = document.createElement('div'); emp.className = 'calendar-day empty'; grid.appendChild(emp); }
     
-    if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
+    if (!state.events[state.calendarMonth]) state.events[state.calendarMonth] = {};
     const monthKey = `${year}-${month.toString().padStart(2, '0')}`; 
     const holidayConfig = TAIWAN_HOLIDAYS[monthKey] || {}; 
 
@@ -1532,10 +1673,10 @@
         if (draggedItem !== null && sourceDay !== null) {
           const targetDay = parseInt(dayDiv.dataset.day);
           if (sourceDay !== targetDay) {
-            const movedObj = state.events[state.currentMonth][sourceDay].splice(draggedItem.index, 1)[0];
-            if (state.events[state.currentMonth][sourceDay].length === 0) delete state.events[state.currentMonth][sourceDay];
-            if (!state.events[state.currentMonth][targetDay]) state.events[state.currentMonth][targetDay] = [];
-            state.events[state.currentMonth][targetDay].push(movedObj);
+            const movedObj = state.events[state.calendarMonth][sourceDay].splice(draggedItem.index, 1)[0];
+            if (state.events[state.calendarMonth][sourceDay].length === 0) delete state.events[state.calendarMonth][sourceDay];
+            if (!state.events[state.calendarMonth][targetDay]) state.events[state.calendarMonth][targetDay] = [];
+            state.events[state.calendarMonth][targetDay].push(movedObj);
             renderCalendar(); saveToLocalStorage();
           }
         }
@@ -1554,7 +1695,7 @@
         dayDiv.appendChild(hTag);
       }
 
-      const evts = state.events[state.currentMonth][day] || [];
+      const evts = state.events[state.calendarMonth][day] || [];
       evts.forEach((evtObj, idx) => {
         const tag = document.createElement('div'); tag.className = `event-tag ${evtObj.completed ? 'completed' : ''}`; tag.draggable = true;
         
@@ -1596,7 +1737,7 @@
           if (draggedItem !== null && sourceDay === day) {
             const targetIdx = idx; const originIdx = draggedItem.index;
             if (originIdx !== targetIdx) {
-              const arr = state.events[state.currentMonth][day];
+              const arr = state.events[state.calendarMonth][day];
               const [movedItem] = arr.splice(originIdx, 1);
               arr.splice(targetIdx, 0, movedItem);
               renderCalendar(); saveToLocalStorage();
@@ -1611,10 +1752,10 @@
         if (event.target.closest('.event-tag') || event.target.closest('.copy-day-btn')) return; 
         const quickText = prompt(`在此日期 (${day} 號) 追加一項日程 (可直接貼上多行文字，或使用 \\n 作為換行)：`);
         if (quickText && quickText.trim() !== '') {
-          if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
-          if (!state.events[state.currentMonth][day]) state.events[state.currentMonth][day] = [];
+          if (!state.events[state.calendarMonth]) state.events[state.calendarMonth] = {};
+          if (!state.events[state.calendarMonth][day]) state.events[state.calendarMonth][day] = [];
           const formattedText = quickText.replace(/\\n/g, '\n').trim();
-          state.events[state.currentMonth][day].push({ text: formattedText, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
+          state.events[state.calendarMonth][day].push({ text: formattedText, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
           renderCalendar(); saveToLocalStorage();
         }
       };
@@ -1657,8 +1798,8 @@
   function removeRecurringTemplate(index) { recurringEventsTemplate.splice(index, 1); renderRecurringManager(); saveToLocalStorage(); }
   
   function applyRecurringEvents() {
-    const [year, month] = state.currentMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
-    if (!state.events[state.currentMonth]) state.events[state.currentMonth] = {};
+    const [year, month] = state.calendarMonth.split('-').map(Number); const lastDay = getDaysInMonth(year, month);
+    if (!state.events[state.calendarMonth]) state.events[state.calendarMonth] = {};
     const monthKey = `${year}-${month.toString().padStart(2, '0')}`; 
     const holidayConfig = TAIWAN_HOLIDAYS[monthKey] || {}; 
 
@@ -1690,10 +1831,10 @@
       
       const finalDaysArray = [...new Set(rawDaysArray)];
       finalDaysArray.forEach(td => {
-        if (!state.events[state.currentMonth][td]) state.events[state.currentMonth][td] = [];
+        if (!state.events[state.calendarMonth][td]) state.events[state.calendarMonth][td] = [];
         multiTexts.forEach(txt => {
-          let isExist = state.events[state.currentMonth][td].some(e => e.text === txt);
-          if (!isExist) state.events[state.currentMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
+          let isExist = state.events[state.calendarMonth][td].some(e => e.text === txt);
+          if (!isExist) state.events[state.calendarMonth][td].push({ text: txt, color: '#e3f2fd', fontColor: '#1e88e5', completed: false });
         });
       });
     });
@@ -1867,7 +2008,7 @@
 
   /* ================== 📄 一鍵轉出未完成工作項目 (.txt) ================== */
   function exportIncompleteTasksTXT() {
-    const currentMonth = state.currentMonth;
+    const currentMonth = state.checklistMonth;
     const monthData = state.checklistData[currentMonth] || {};
     
     let txtContent = `========================================\n`;
@@ -1877,7 +2018,6 @@
 
     let totalIncomplete = 0;
 
-    // 走訪所有頁籤
     subTabs.forEach(tabName => {
       const items = monthData[tabName] || [];
       const incompleteItems = items.filter(item => !item.completed);
@@ -1886,7 +2026,6 @@
         txtContent += `【 📁 頁籤：${tabName} 】\n`;
         txtContent += `----------------------------------------\n`;
 
-        // 按分類整理
         categories.forEach(cat => {
           const catItems = incompleteItems.filter(item => item.category === cat);
           if (catItems.length > 0) {
@@ -1898,9 +2037,8 @@
               if (item.note) txtContent += `  [備註: ${item.note}]`;
               txtContent += `\n`;
               
-              // 注意事項（若有換行則縮排顯示）
               if (item.notice) {
-                const formattedNotice = item.notice.split('\n').map(line => `       ⚠️ 注意: ${line}`).join('\n');
+                const formattedNotice = item.notice.split('\n').map(line => `        ⚠️ 注意: ${line}`).join('\n');
                 txtContent += `${formattedNotice}\n`;
               }
             });
@@ -1920,7 +2058,6 @@
     txtContent += `總計未完成項目：${totalIncomplete} 項\n`;
     txtContent += `========================================\n`;
 
-    // 下載 TXT 檔案
     const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -1929,7 +2066,7 @@
   }
 
   function exportFullChecklistSOPTemplate() {
-    const currentMonthChecklist = state.checklistData[state.currentMonth] || {};
+    const currentMonthChecklist = state.checklistData[state.checklistMonth] || {};
     
     const cleanedChecklistData = {};
     for (let tabName in currentMonthChecklist) {
@@ -1988,8 +2125,8 @@
           });
         }
         
-        if (!state.checklistData[state.currentMonth]) state.checklistData[state.currentMonth] = {};
-        const currentMonthChecklist = state.checklistData[state.currentMonth];
+        if (!state.checklistData[state.checklistMonth]) state.checklistData[state.checklistMonth] = {};
+        const currentMonthChecklist = state.checklistData[state.checklistMonth];
         
         let appendedItemsCount = 0;
         let skippedItemsCount = 0;
@@ -2048,15 +2185,18 @@
   function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
   function getFirstDayOfWeek(year, month) { return new Date(year, month - 1, 1).getDay(); }
 
-  window.onload = function() {
-    loadFromLocalStorage(); 
-    generateMonthOptions(); 
-    renderCategoriesManager(); 
-    globalSwitchMonth();
-    renderScratchpadCards(); 
-    renderYearlyGoals(); 
+  window.onload = async function() {
+    await initIndexedDB();         // 1. 初始化防清理 DB 數據庫
+    requestPersistentStorage();      // 2. 申請瀏覽器持久儲存權限
+    await loadFromLocalStorage();    // 3. 載入本地儲存資料
+    generateMonthOptions();         // 4. 建立兩組選單
+    renderCategoriesManager();       // 5. 渲染分類
+    switchChecklistMonth();         // 6. 載入 Checklist
+    switchCalendarMonth();          // 7. 載入行事曆與面板
+    renderScratchpadCards();        // 8. 載入隨手貼
+    renderYearlyGoals();            // 9. 載入年度目標
     
-    fetchLatestTaiwanHolidays();
+    fetchLatestTaiwanHolidays();     // 10. 同步節假日
   };
 </script>
 </body>
