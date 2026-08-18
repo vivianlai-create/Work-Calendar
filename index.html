@@ -40,7 +40,7 @@
       position: absolute; top: 20px; right: 20px; background-color: #2c3e50; color: #f1c40f; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: bold; border: 1px solid #f1c40f;
     }
     
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; flex-wrap: wrap; }
     .tab-btn { padding: 10px 20px; font-size: 16px; font-weight: bold; border: none; background-color: #e0e0e0; color: #666; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
     .tab-btn.active { background-color: var(--primary-color); color: white; box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3); }
 
@@ -59,6 +59,7 @@
     select, input, button, textarea { font-family: inherit; }
     select, input[type="text"], input[type="date"], input[type="color"], input[type="number"], textarea { padding: 6px 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
 
+    /* 控制列：完全還原原始尺寸與視覺 */
     .control-bar { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px; background-color: #fff; padding: 12px 18px; border-radius: 6px; border: 1px solid #e0e0e0; flex-wrap: wrap; }
     .control-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     
@@ -189,6 +190,7 @@
     .badge-undone { background-color: #f8d7da; color: #721c24; }
     .badge-none { background-color: #e2e3e5; color: #383d41; }
 
+    /* 便條紙看板：完全還原原始 950px 高度、邊框、縮放與拖曳 CSS */
     .scratchpad-board {
       position: relative;
       width: 100%;
@@ -325,6 +327,21 @@
       -webkit-user-select: none;
       font-weight: normal;
     }
+
+    .global-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .global-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 6px;
+      background-color: #fafafa;
+      border: 1px solid #eee;
+    }
   </style>
 </head>
 <body>
@@ -346,13 +363,16 @@
 
   <div class="tabs">
     <button class="tab-btn active" id="btn-tab-checklist" onclick="switchTab('tab-checklist', this)">📝 工作項目 Checklist</button>
-    <button class="btn tab-btn" id="btn-tab-calendar" onclick="switchTab('tab-calendar', this)">📅 工作行事曆</button>
-    <button class="btn tab-btn" id="btn-tab-yearly-goals" onclick="switchTab('tab-yearly-goals', this)">🎯 年度目標</button>
-    <button class="btn tab-btn" id="btn-tab-scratchpad" onclick="switchTab('tab-scratchpad', this)">📌 隨手便條紙</button>
-    <button class="btn tab-btn" id="btn-tab-theme" onclick="switchTab('tab-theme', this)">🎨 儀表板主題配色</button>
+    <button class="tab-btn" id="btn-tab-calendar" onclick="switchTab('tab-calendar', this)">📅 工作行事曆</button>
+    <button class="tab-btn" id="btn-tab-yearly-goals" onclick="switchTab('tab-yearly-goals', this)">🎯 年度目標</button>
+    <button class="tab-btn" id="btn-tab-scratchpad" onclick="switchTab('tab-scratchpad', this)">📌 隨手便條紙</button>
+    <button class="tab-btn" id="btn-tab-achievements" onclick="switchTab('tab-achievements', this)">🏆 成就與感悟</button>
+    <button class="tab-btn" id="btn-tab-errors" onclick="switchTab('tab-errors', this)">❌ 錯誤事項 / 待檢討改善</button>
+    <button class="tab-btn" id="btn-tab-theme" onclick="switchTab('tab-theme', this)">🎨 儀表板主題配色</button>
   </div>
 
-  <div class="control-bar">
+  <!-- 完全還原：原始 control-bar 結構與按鈕尺寸 -->
+  <div class="control-bar" id="month-control-bar">
     <!-- Checklist 獨立月份切換控制區 -->
     <div class="control-group">
       <label style="font-weight: bold; color: #2c3e50;">📝 Checklist 月份：</label>
@@ -375,7 +395,7 @@
       <div id="sub-tabs-list" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"></div>
       <button class="btn btn-success" style="padding: 4px 10px; font-size: 12px; margin-left: 10px;" onclick="addNewSubTab()">＋新增頁籤</button>
       
-      <span style="margin-left: auto; display: inline-flex; gap: 6px;">
+      <span style="margin-left: auto; display: inline-flex; gap: 6px; flex-wrap: wrap;">
         <button class="btn" style="background-color: #e67e22; padding: 4px 10px; font-size: 12px;" onclick="exportIncompleteTasksTXT()">📄 匯出未完成項目 (.txt)</button>
         <button class="btn" style="background-color: #34495e; padding: 4px 10px; font-size: 12px;" onclick="exportFullChecklistSOPTemplate()">📦 下載完整 SOP 範本檔 (.json)</button>
         <button class="btn" style="background-color: #8e44ad; padding: 4px 10px; font-size: 12px;" onclick="document.getElementById('import-checklist-input').click()">📥 導入完整標準工作項目</button>
@@ -609,7 +629,7 @@
     </div>
   </div>
 
-  <!-- 隨手便條紙看板區 -->
+  <!-- 隨手便條紙看板區：完全還原原始 HTML 與設定 -->
   <div id="tab-scratchpad" class="tab-content">
     <div class="card">
       <div class="card-title">
@@ -620,7 +640,37 @@
     </div>
   </div>
 
-  <!-- 分頁三：配色自訂分頁 -->
+  <!-- 獨立分頁：成就與感悟 (跨月份全局自動匯整) -->
+  <div id="tab-achievements" class="tab-content">
+    <div class="card" style="border: 1px solid #2ecc71;">
+      <div class="card-title" style="color: #2ecc71;">
+        <span>🏆 個人成就與心得感悟全記錄 (跨月份全局自動彙整)</span>
+      </div>
+      <form onsubmit="addGlobalAchievementItem(event)" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <input type="date" id="global-achievement-date" required style="width: 160px;">
+        <input type="text" id="global-achievement-input" placeholder="在此紀錄新的成就或心得感悟..." required style="flex-grow: 1;">
+        <button type="submit" class="btn" style="background-color: #2ecc71;">🚀 記錄成就</button>
+      </form>
+      <div id="global-achievements-list" class="global-list-container"></div>
+    </div>
+  </div>
+
+  <!-- 獨立分頁：錯誤事項 / 待檢討改善 (跨月份全局自動匯整) -->
+  <div id="tab-errors" class="tab-content">
+    <div class="card" style="border: 1px solid #e74c3c;">
+      <div class="card-title" style="color: #e74c3c;">
+        <span>❌ 錯誤經驗與改進建議全記錄 (跨月份全局自動彙整)</span>
+      </div>
+      <form onsubmit="addGlobalErrorItem(event)" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <input type="date" id="global-error-date" required style="width: 160px;">
+        <input type="text" id="global-error-input" placeholder="在此紀錄錯誤經驗或改進點..." required style="flex-grow: 1;">
+        <button type="submit" class="btn btn-danger">📝 記錄錯誤改進</button>
+      </form>
+      <div id="global-errors-list" class="global-list-container"></div>
+    </div>
+  </div>
+
+  <!-- 分頁：配色自訂分頁 -->
   <div id="tab-theme" class="tab-content">
     <div class="card">
       <div class="card-title"><span>🎨 儀表板主題配色客製化</span></div>
@@ -647,6 +697,7 @@
   let collapsedCategories = {};
   let isTemplateTableExpanded = false; 
   
+  // 完全還原原始便條紙預設資料
   let scratchpadCards = [
     { id: 'memo-1', title: '會議大綱', content: '與團隊確認串接細節。', x: 50, y: 50, w: 260, h: 180, bgColor: '#fffef2', textColor: '#5d4037' }
   ];
@@ -696,7 +747,7 @@
 
   let headerData = { title: "工作儀表板 Ultimate Pro", desc: "" };
 
-  /* ================== 🛡️ 防自動清理持久儲存庫 (IndexedDB + Persistent Storage) ================== */
+  /* IndexedDB 持久保護機制 */
   let dbInstance = null;
 
   async function requestPersistentStorage() {
@@ -792,7 +843,6 @@
       });
       TAIWAN_HOLIDAYS = Object.assign({}, TAIWAN_HOLIDAYS, tempHolidays);
       renderCalendar();
-      console.log("⚡ 成功同步最新行政院放假資訊！");
     } catch (e) {
       console.warn("⚠️ 自動取得行政院放假資訊失敗，採用本地預設節假日。", e);
     }
@@ -847,6 +897,8 @@
         switchCalendarMonth();
         renderScratchpadCards();
         renderYearlyGoals(); 
+        renderGlobalAchievements();
+        renderGlobalErrors();
         alert("🎉 備份資料已 100% 成功匯入還原！");
       } catch (err) { alert("❌ 匯入失敗！"); }
     };
@@ -862,7 +914,6 @@
     localStorage.setItem('dashboard_scratchpad_cards', JSON.stringify(scratchpadCards));
     localStorage.setItem('dashboard_header_data', JSON.stringify(headerData));
 
-    // 🛡️ 同步進行 IndexedDB 雙重備份
     saveToIndexedDB('dashboard_categories', categories);
     saveToIndexedDB('dashboard_subtabs', subTabs);
     saveToIndexedDB('dashboard_current_subtab', currentSubTab);
@@ -881,9 +932,7 @@
     let cachedScratchpadCards = localStorage.getItem('dashboard_scratchpad_cards');
     let cachedHeaderData = localStorage.getItem('dashboard_header_data');
 
-    // 🛡️ 防自動清理回復：若 LocalStorage 被清空，嘗試從 IndexedDB 自動拯救備份
     if (!cachedState && dbInstance) {
-      console.log('⚠️ LocalStorage 空白，啟動 IndexedDB 備份自動還原...');
       const dbState = await getFromIndexedDB('dashboard_state');
       if (dbState) {
         state = dbState;
@@ -893,7 +942,7 @@
         recurringEventsTemplate = (await getFromIndexedDB('dashboard_recurring')) || recurringEventsTemplate;
         scratchpadCards = (await getFromIndexedDB('dashboard_scratchpad_cards')) || scratchpadCards;
         headerData = (await getFromIndexedDB('dashboard_header_data')) || headerData;
-        saveToLocalStorage(); // 重新補回 LocalStorage
+        saveToLocalStorage();
       }
     } else {
       if (cachedCategories) categories = JSON.parse(cachedCategories);
@@ -955,7 +1004,6 @@
   }
   function resetThemeColors() { document.getElementById('theme-primary').value = '#4a90e2'; document.getElementById('theme-bg').value = '#f8f9fa'; updateThemeColors(); }
 
-  // 雙選單月份選單渲染
   function generateMonthOptions() {
     const selectChecklist = document.getElementById('checklist-month-select');
     const selectCalendar = document.getElementById('calendar-month-select');
@@ -996,7 +1044,6 @@
     selectCalendar.value = state.calendarMonth;
   }
 
-  /* ================== 📝 Checklist 月份獨立控制 ================== */
   function switchChecklistMonth() {
     state.checklistMonth = document.getElementById('checklist-month-select').value;
     renderSubTabs();
@@ -1012,11 +1059,9 @@
     switchChecklistMonth();
   }
 
-  /* ================== 📅 行事曆月份獨立控制 ================== */
   function switchCalendarMonth() {
     state.calendarMonth = document.getElementById('calendar-month-select').value;
     
-    // ⚡ 順延過去未完成事項邏輯（以行事曆月份為依歸）
     carryForwardIncompleteItems();
 
     const defaultDateVal = `${state.calendarMonth}-01`;
@@ -1062,6 +1107,17 @@
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active'); btn.classList.add('active');
+
+    // 獨立頁籤不影響月份切換列
+    const monthControlBar = document.getElementById('month-control-bar');
+    if (tabId === 'tab-achievements' || tabId === 'tab-errors' || tabId === 'tab-scratchpad' || tabId === 'tab-yearly-goals' || tabId === 'tab-theme') {
+      monthControlBar.style.display = 'none';
+    } else {
+      monthControlBar.style.display = 'flex';
+    }
+
+    if (tabId === 'tab-achievements') renderGlobalAchievements();
+    if (tabId === 'tab-errors') renderGlobalErrors();
   }
 
   function toggleRecurringTableList() {
@@ -1072,7 +1128,6 @@
     else { wrapper.style.display = "none"; btn.innerText = "[▶ 展開列表]"; }
   }
 
-  // 🔄 自動順延過去未完成事項邏輯（針對行事曆右側欄位）
   function carryForwardIncompleteItems() {
     const currentKey = state.calendarMonth;
     
@@ -1120,7 +1175,7 @@
     });
   }
 
-  /* ================== 子頁籤 ================== */
+  /* 子頁籤 */
   let subTabDragIdx = null;
 
   function renderSubTabs() {
@@ -1249,7 +1304,7 @@
     tbody.innerHTML = rowsHtml.join('');
   }
 
-  /* ================== 🏷️ Checklist ================== */
+  /* Checklist 核心邏輯 */
   let categoryDragIdx = null;
 
   function toggleCategoryCollapse(catName) { collapsedCategories[catName] = !collapsedCategories[catName]; renderChecklist(); }
@@ -1438,7 +1493,7 @@
     renderChecklist(); renderYearlyProgressTracker(); saveToLocalStorage();
   }
 
-  /* ================== 其他面板資訊功能 ================== */
+  /* 側邊欄面板與事件處理 */
   function renderImportantItems() {
     const container = document.getElementById('important-items-container'); container.innerHTML = '';
     if (!state.importantItems[state.calendarMonth]) state.importantItems[state.calendarMonth] = [];
@@ -1501,9 +1556,12 @@
   function addAchievementItem(e) {
     e.preventDefault(); if (!state.achievementItems[state.calendarMonth]) state.achievementItems[state.calendarMonth] = [];
     state.achievementItems[state.calendarMonth].push({ date: document.getElementById('new-achievement-date').value, text: document.getElementById('new-achievement-input').value.trim() });
-    document.getElementById('new-achievement-input').value = ''; renderAchievementItems(); saveToLocalStorage();
+    document.getElementById('new-achievement-input').value = ''; renderAchievementItems(); renderGlobalAchievements(); saveToLocalStorage();
   }
-  function deleteAchievementItem(index) { state.achievementItems[state.calendarMonth].splice(index, 1); renderAchievementItems(); saveToLocalStorage(); }
+  function deleteAchievementItem(index) { 
+    state.achievementItems[state.calendarMonth].splice(index, 1); 
+    renderAchievementItems(); renderGlobalAchievements(); saveToLocalStorage(); 
+  }
 
   function renderErrorItems() {
     const container = document.getElementById('error-items-container'); container.innerHTML = '';
@@ -1517,10 +1575,123 @@
   function addErrorItem(e) {
     e.preventDefault(); if (!state.errorItems[state.calendarMonth]) state.errorItems[state.calendarMonth] = [];
     state.errorItems[state.calendarMonth].push({ date: document.getElementById('new-error-date').value, text: document.getElementById('new-error-input').value.trim() });
-    document.getElementById('new-error-input').value = ''; renderErrorItems(); saveToLocalStorage();
+    document.getElementById('new-error-input').value = ''; renderErrorItems(); renderGlobalErrors(); saveToLocalStorage();
   }
-  function deleteErrorItem(index) { state.errorItems[state.calendarMonth].splice(index, 1); renderErrorItems(); saveToLocalStorage(); }
+  function deleteErrorItem(index) { 
+    state.errorItems[state.calendarMonth].splice(index, 1); 
+    renderErrorItems(); renderGlobalErrors(); saveToLocalStorage(); 
+  }
 
+  /* 🏆 全局成就與感悟 (自動跨月份匯整) */
+  function renderGlobalAchievements() {
+    const container = document.getElementById('global-achievements-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    let allItems = [];
+    for (let mKey in state.achievementItems) {
+      (state.achievementItems[mKey] || []).forEach((item, index) => {
+        allItems.push({ monthKey: mKey, index: index, date: item.date, text: item.text });
+      });
+    }
+
+    allItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (allItems.length === 0) {
+      container.innerHTML = `<p style="color: #999; font-style: italic; text-align: center; padding: 20px;">尚無記錄，可在上方或行事曆右側欄新增。</p>`;
+      return;
+    }
+
+    allItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'global-list-item';
+      div.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="background-color: #e8f8f5; color: #117a65; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 12px;">📅 ${item.date}</span>
+          <span style="font-size: 14px; font-weight: bold; color: #117a65;">${item.text}</span>
+        </div>
+        <button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteGlobalSidebarItem('achievementItems', '${item.monthKey}', ${item.index})">刪除</button>`;
+      container.appendChild(div);
+    });
+  }
+
+  function addGlobalAchievementItem(e) {
+    e.preventDefault();
+    const dateVal = document.getElementById('global-achievement-date').value;
+    const textVal = document.getElementById('global-achievement-input').value.trim();
+    if (!dateVal || !textVal) return;
+    const mKey = dateVal.substring(0, 7);
+
+    if (!state.achievementItems[mKey]) state.achievementItems[mKey] = [];
+    state.achievementItems[mKey].push({ date: dateVal, text: textVal });
+    
+    document.getElementById('global-achievement-input').value = '';
+    renderGlobalAchievements();
+    renderAchievementItems();
+    saveToLocalStorage();
+  }
+
+  /* ❌ 全局錯誤與檢討 (自動跨月份匯整) */
+  function renderGlobalErrors() {
+    const container = document.getElementById('global-errors-list');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    let allItems = [];
+    for (let mKey in state.errorItems) {
+      (state.errorItems[mKey] || []).forEach((item, index) => {
+        allItems.push({ monthKey: mKey, index: index, date: item.date, text: item.text });
+      });
+    }
+
+    allItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (allItems.length === 0) {
+      container.innerHTML = `<p style="color: #999; font-style: italic; text-align: center; padding: 20px;">尚無錯誤與檢討記錄。</p>`;
+      return;
+    }
+
+    allItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'global-list-item';
+      div.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="background-color: #fbe9e7; color: #d84315; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 12px;">📅 ${item.date}</span>
+          <span style="font-size: 14px; font-weight: bold; color: #c0392b;">${item.text}</span>
+        </div>
+        <button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteGlobalSidebarItem('errorItems', '${item.monthKey}', ${item.index})">刪除</button>`;
+      container.appendChild(div);
+    });
+  }
+
+  function addGlobalErrorItem(e) {
+    e.preventDefault();
+    const dateVal = document.getElementById('global-error-date').value;
+    const textVal = document.getElementById('global-error-input').value.trim();
+    if (!dateVal || !textVal) return;
+    const mKey = dateVal.substring(0, 7);
+
+    if (!state.errorItems[mKey]) state.errorItems[mKey] = [];
+    state.errorItems[mKey].push({ date: dateVal, text: textVal });
+    
+    document.getElementById('global-error-input').value = '';
+    renderGlobalErrors();
+    renderErrorItems();
+    saveToLocalStorage();
+  }
+
+  function deleteGlobalSidebarItem(listKey, mKey, index) {
+    if (state[listKey][mKey]) {
+      state[listKey][mKey].splice(index, 1);
+      if (listKey === 'achievementItems') renderGlobalAchievements();
+      if (listKey === 'errorItems') renderGlobalErrors();
+      renderAchievementItems();
+      renderErrorItems();
+      saveToLocalStorage();
+    }
+  }
+
+  /* 批量處理 */
   function renderBatchPool() {
     const listDiv = document.getElementById('batch-items-list'); listDiv.innerHTML = '';
     if (batchPoolArray.length === 0) { listDiv.innerHTML = '<span style="color:#aaa; font-style:italic; font-size:12px;">籃子目前是空的。</span>'; return; }
@@ -1569,7 +1740,7 @@
     }
   }
 
-  /* ================== 📅 行事曆核心邏輯 ================== */
+  /* 行事曆核心 */
   let draggedItem = null; let sourceDay = null;
 
   function toggleEventCompleted(day, idx) {
@@ -1763,7 +1934,7 @@
     }
   }
 
-  /* ================== ⚙️ 範本配置與自動排程區 ================== */
+  /* 範本與自動排程區 */
   function updateTemplateCondition(index, field, value) {
     if (field === 'condition') {
       if (recurringEventsTemplate[index].workday !== '') recurringEventsTemplate[index].workday = value.trim();
@@ -1846,7 +2017,7 @@
     saveToLocalStorage();
   }
 
-  /* ================== 📌 隨手便條紙看板系統 ================== */
+  /* 📌 隨手便條紙看板系統：完全還原原始程式碼 JS 互動與佈局邏輯 */
   let isDraggingCard = false;
   let activeCard = null;
   let offsetX = 0;
@@ -2006,7 +2177,7 @@
     saveToLocalStorage();
   }
 
-  /* ================== 📄 一鍵轉出未完成工作項目 (.txt) ================== */
+  /* 📄 一鍵轉出未完成工作項目 (.txt) 與 SOP 功能 */
   function exportIncompleteTasksTXT() {
     const currentMonth = state.checklistMonth;
     const monthData = state.checklistData[currentMonth] || {};
@@ -2195,8 +2366,17 @@
     switchCalendarMonth();          // 7. 載入行事曆與面板
     renderScratchpadCards();        // 8. 載入隨手貼
     renderYearlyGoals();            // 9. 載入年度目標
+    renderGlobalAchievements();     // 10. 載入全局成就
+    renderGlobalErrors();           // 11. 載入全局檢討
     
-    fetchLatestTaiwanHolidays();     // 10. 同步節假日
+    fetchLatestTaiwanHolidays();     // 12. 同步節假日
+    
+    // 初始化全域新增日期的預設值為當日
+    const todayStr = `${REAL_CURRENT_YEAR}-${REAL_CURRENT_MONTH.toString().padStart(2, '0')}-${SYSTEM_DATE.getDate().toString().padStart(2, '0')}`;
+    const gAchDate = document.getElementById('global-achievement-date');
+    const gErrDate = document.getElementById('global-error-date');
+    if (gAchDate) gAchDate.value = todayStr;
+    if (gErrDate) gErrDate.value = todayStr;
   };
 </script>
 </body>
